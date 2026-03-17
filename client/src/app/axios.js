@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://dreamfit-v1.onrender.com/api",
+  baseURL: "https://dreamfit-v2.onrender.com/api",
   headers: {
     "Content-Type": "application/json",
   },
