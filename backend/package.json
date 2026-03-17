@@ -1,0 +1,43 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "seed": "node seed/seed.js",
+    "seed:admin": "node seed/admin.seed.js",
+    "seed:storekeeper": "node seed/storekeeper.seed.js",
+    "seed:cuttingmaster": "node seed/cuttingmaster.seed.js",
+    "seed:tailor": "node seed/tailor.seed.js",
+    "seed:fabric": "node seed/fabric.seed.js",
+    "seed:category": "node seed/category.seed.js",
+    "seed:item": "node seed/item.seed.js",
+    "seed:sizefield": "node seed/sizefield.seed.js",
+    "seed:sizetemplate": "node seed/sizetemplate.seed.js",
+    "seed:customer": "node seed/customer.seed.js",
+    "seed:all": "npm run seed:admin && npm run seed:storekeeper && npm run seed:cuttingmaster && npm run seed:tailor && npm run seed:fabric && npm run seed:category && npm run seed:item && npm run seed:sizefield && npm run seed:sizetemplate && npm run seed:customer"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.995.0",
+    "bcryptjs": "^3.0.3",
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.2.1",
+    "morgan": "^1.10.1",
+    "multer": "^1.4.5-lts.1",
+    "twilio": "^5.13.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
