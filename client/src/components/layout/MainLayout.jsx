@@ -409,7 +409,7 @@ export default function MainLayout() {
       { id: 'products', icon: Package, label: 'Products', path: `/${rolePath}/products`, show: canViewProducts },
       { id: 'customers', icon: Users, label: 'Customers', path: `/${rolePath}/customers`, show: canViewCustomers },
       { id: 'banking', icon: Landmark, label: 'Banking', path: '#', show: canViewBanking, isDropdown: true },
-      { id: 'reports', icon: BarChart3, label: 'Reports', path: '#', show: canViewReports, isDropdown: true },
+      // { id: 'reports', icon: BarChart3, label: 'Reports', path: '#', show: canViewReports, isDropdown: true },
       { id: 'staff', icon: UserCircle, label: 'Staff', path: `/${rolePath}/staff`, show: canViewStaff },
       { id: 'settings', icon: Settings, label: 'Settings', path: `/${rolePath}/settings`, show: canViewSettings },
     ];

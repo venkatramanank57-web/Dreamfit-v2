@@ -392,18 +392,28 @@
 //     setPage(1);
 //   };
 
+//   // 🔥 FIXED: getNotificationLink with proper ID extraction
 //   const getNotificationLink = (notification) => {
 //     const rolePath = basePath;
     
-//     if (notification.reference?.workId) {
-//       return `${rolePath}/works/${notification.reference.workId}`;
+//     // Check if reference exists
+//     const ref = notification.reference || {};
+
+//     // 🔥 Extract only the ID string if it's an object
+//     const workId = ref.workId?._id || ref.workId;
+//     const orderId = ref.orderId?._id || ref.orderId;
+//     const garmentId = ref.garmentId?._id || ref.garmentId;
+
+//     if (workId && typeof workId === 'string') {
+//       return `${rolePath}/works/${workId}`;
 //     }
-//     if (notification.reference?.orderId) {
-//       return `${rolePath}/orders/${notification.reference.orderId}`;
+//     if (orderId && typeof orderId === 'string') {
+//       return `${rolePath}/orders/${orderId}`;
 //     }
-//     if (notification.reference?.garmentId) {
-//       return `${rolePath}/garments/${notification.reference.garmentId}`;
+//     if (garmentId && typeof garmentId === 'string') {
+//       return `${rolePath}/garments/${garmentId}`;
 //     }
+    
 //     return '#';
 //   };
 
@@ -688,10 +698,10 @@
 //                                 notification.reference?.garmentId) && (
 //                                 <>
 //                                   <span className="text-gray-300">•</span>
+//                                   {/* 🔥 FIXED: Link with NO onClick - just navigation */}
 //                                   <Link
 //                                     to={getNotificationLink(notification)}
 //                                     className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-//                                     onClick={() => !notification.isRead && handleMarkAsRead(notification._id)}
 //                                   >
 //                                     View Details
 //                                     <Eye size={12} />
@@ -701,7 +711,7 @@
 //                             </div>
 //                           </div>
 
-//                           {/* Actions */}
+//                           {/* Actions - ONLY here we have mark as read button */}
 //                           {!selectMode && (
 //                             <div className="flex items-center gap-2">
 //                               {!notification.isRead && (
@@ -797,6 +807,7 @@
 
 
 
+
 // Pages/notifications/NotificationsPage.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -822,7 +833,8 @@ import {
   Mail,
   MailOpen,
   Flag,
-  Search
+  Search,
+  Menu
 } from 'lucide-react';
 import {
   fetchNotifications,
@@ -869,32 +881,36 @@ const NotificationIcon = ({ type, isRead }) => {
 };
 
 // ============================================
-// 🏷️ NOTIFICATION BADGE COMPONENT
+// 🏷️ NOTIFICATION BADGE COMPONENT (MOBILE RESPONSIVE)
 // ============================================
 const NotificationBadge = ({ type, priority, isRead }) => {
   if (isRead) return null;
   
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap gap-1 sm:gap-2">
       {priority === 'high' && (
-        <span className="px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded-full font-medium flex items-center gap-1">
-          <Flag size={10} />
-          High Priority
+        <span className="px-1.5 sm:px-2 py-0.5 bg-red-100 text-red-600 text-[10px] sm:text-xs rounded-full font-medium flex items-center gap-0.5 sm:gap-1">
+          <Flag size={8} className="sm:w-3 sm:h-3" />
+          <span className="hidden sm:inline">High Priority</span>
+          <span className="sm:hidden">High</span>
         </span>
       )}
       {type === 'work-available' && (
-        <span className="px-2 py-0.5 bg-purple-100 text-purple-600 text-xs rounded-full font-medium">
-          New Work
+        <span className="px-1.5 sm:px-2 py-0.5 bg-purple-100 text-purple-600 text-[10px] sm:text-xs rounded-full font-medium">
+          <span className="hidden sm:inline">New Work</span>
+          <span className="sm:hidden">New</span>
         </span>
       )}
       {type === 'work-assigned' && (
-        <span className="px-2 py-0.5 bg-blue-100 text-blue-600 text-xs rounded-full font-medium">
-          Assigned
+        <span className="px-1.5 sm:px-2 py-0.5 bg-blue-100 text-blue-600 text-[10px] sm:text-xs rounded-full font-medium">
+          <span className="hidden sm:inline">Assigned</span>
+          <span className="sm:hidden">Asgn</span>
         </span>
       )}
       {type === 'work-accepted' && (
-        <span className="px-2 py-0.5 bg-green-100 text-green-600 text-xs rounded-full font-medium">
-          Accepted
+        <span className="px-1.5 sm:px-2 py-0.5 bg-green-100 text-green-600 text-[10px] sm:text-xs rounded-full font-medium">
+          <span className="hidden sm:inline">Accepted</span>
+          <span className="sm:hidden">Acc</span>
         </span>
       )}
     </div>
@@ -902,7 +918,7 @@ const NotificationBadge = ({ type, priority, isRead }) => {
 };
 
 // ============================================
-// ⏱️ TIME FORMATTER
+// ⏱️ TIME FORMATTER (MOBILE FRIENDLY)
 // ============================================
 const formatTimeAgo = (dateString) => {
   if (!dateString) return 'Unknown';
@@ -915,15 +931,15 @@ const formatTimeAgo = (dateString) => {
     if (diffInSeconds < 60) return 'Just now';
     if (diffInSeconds < 3600) {
       const mins = Math.floor(diffInSeconds / 60);
-      return `${mins} min${mins > 1 ? 's' : ''} ago`;
+      return `${mins}m ago`;
     }
     if (diffInSeconds < 86400) {
       const hours = Math.floor(diffInSeconds / 3600);
-      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+      return `${hours}h ago`;
     }
     if (diffInSeconds < 604800) {
       const days = Math.floor(diffInSeconds / 86400);
-      return `${days} day${days > 1 ? 's' : ''} ago`;
+      return `${days}d ago`;
     }
     
     return date.toLocaleDateString('en-US', { 
@@ -938,14 +954,14 @@ const formatTimeAgo = (dateString) => {
 };
 
 // ============================================
-// 📄 EMPTY STATE COMPONENT
+// 📄 EMPTY STATE COMPONENT (MOBILE RESPONSIVE)
 // ============================================
 const EmptyState = ({ filter, onViewAll }) => {
   const getIcon = () => {
     switch(filter) {
-      case 'unread': return <Mail className="text-gray-300" size={48} />;
-      case 'read': return <MailOpen className="text-gray-300" size={48} />;
-      default: return <Inbox className="text-gray-300" size={48} />;
+      case 'unread': return <Mail className="text-gray-300" size={40} />;
+      case 'read': return <MailOpen className="text-gray-300" size={40} />;
+      default: return <Inbox className="text-gray-300" size={40} />;
     }
   };
 
@@ -961,16 +977,16 @@ const EmptyState = ({ filter, onViewAll }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-16 text-center">
-      <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+    <div className="bg-white rounded-xl shadow-sm p-8 sm:p-16 text-center">
+      <div className="w-16 h-16 sm:w-24 sm:h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
         {getIcon()}
       </div>
-      <h3 className="text-xl font-bold text-gray-800 mb-2">No notifications</h3>
-      <p className="text-gray-500 mb-6">{getMessage()}</p>
+      <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2">No notifications</h3>
+      <p className="text-sm sm:text-base text-gray-500 mb-4 sm:mb-6 px-4">{getMessage()}</p>
       {filter !== 'all' && (
         <button
           onClick={onViewAll}
-          className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-medium shadow-lg shadow-blue-500/20"
+          className="px-4 sm:px-6 py-2 sm:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-medium shadow-lg shadow-blue-500/20 text-sm sm:text-base"
         >
           View All Notifications
         </button>
@@ -980,17 +996,17 @@ const EmptyState = ({ filter, onViewAll }) => {
 };
 
 // ============================================
-// 📊 STATS CARD COMPONENT
+// 📊 STATS CARD COMPONENT (MOBILE RESPONSIVE)
 // ============================================
 const StatsCard = ({ icon: Icon, label, value, color }) => (
-  <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-    <div className="flex items-center gap-3">
-      <div className={`w-10 h-10 rounded-lg bg-${color}-100 flex items-center justify-center`}>
-        <Icon size={20} className={`text-${color}-600`} />
+  <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4 border border-gray-100">
+    <div className="flex items-center gap-2 sm:gap-3">
+      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-${color}-100 flex items-center justify-center flex-shrink-0`}>
+        <Icon size={16} className={`text-${color}-600 sm:w-5 sm:h-5`} />
       </div>
-      <div>
-        <p className="text-sm text-gray-500">{label}</p>
-        <p className="text-xl font-bold text-gray-800">{value}</p>
+      <div className="min-w-0">
+        <p className="text-xs text-gray-500 truncate">{label}</p>
+        <p className="text-lg sm:text-xl font-bold text-gray-800">{value}</p>
       </div>
     </div>
   </div>
@@ -1018,6 +1034,8 @@ export default function NotificationsPage() {
   const [selectMode, setSelectMode] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [showMobileActions, setShowMobileActions] = useState(false);
 
   // Filter notifications based on current filter
   const filteredNotifications = useMemo(() => {
@@ -1117,6 +1135,7 @@ export default function NotificationsPage() {
         await dispatch(markAllAsRead()).unwrap();
         showToast.success('All notifications marked as read');
         dispatch(fetchUnreadCount());
+        setShowMobileActions(false);
       } catch (error) {
         showToast.error(error || 'Failed to mark all as read');
       }
@@ -1147,6 +1166,7 @@ export default function NotificationsPage() {
         setSelectedNotifications([]);
         setSelectMode(false);
         dispatch(fetchUnreadCount());
+        setShowMobileActions(false);
       } catch (error) {
         showToast.error(error || 'Failed to delete notifications');
       }
@@ -1173,6 +1193,7 @@ export default function NotificationsPage() {
     loadNotifications();
     dispatch(fetchUnreadCount());
     showToast.success('Notifications refreshed');
+    setShowMobileActions(false);
   };
 
   const handleBack = () => {
@@ -1184,6 +1205,7 @@ export default function NotificationsPage() {
     setPage(1);
     setSelectedNotifications([]);
     setSelectMode(false);
+    setShowMobileActions(false);
   };
 
   const handleLimitChange = (e) => {
@@ -1240,29 +1262,30 @@ export default function NotificationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Fixed Header */}
+      {/* Fixed Header - Mobile Responsive */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
           
-          {/* Top Row */}
+          {/* Top Row - Mobile Responsive */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
               <button
                 onClick={handleBack}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-all"
+                className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-all flex-shrink-0"
               >
-                <ArrowLeft size={20} className="text-gray-600" />
+                <ArrowLeft size={18} className="text-gray-600 sm:w-5 sm:h-5" />
               </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800">Notifications</h1>
-                <p className="text-sm text-gray-500">
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-800 truncate">Notifications</h1>
+                <p className="text-xs sm:text-sm text-gray-500 truncate">
                   {filteredNotifications.length} notification{filteredNotifications.length !== 1 ? 's' : ''}
                   {filter !== 'all' && ` (${filter})`}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            {/* Desktop Actions - Hidden on Mobile */}
+            <div className="hidden sm:flex items-center gap-3">
               {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
@@ -1271,7 +1294,7 @@ export default function NotificationsPage() {
                   placeholder="Search..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-64 bg-white"
+                  className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-64 bg-white text-sm"
                 />
                 {searchTerm && (
                   <button
@@ -1321,21 +1344,124 @@ export default function NotificationsPage() {
                 </button>
               )}
             </div>
+
+            {/* Mobile Actions Menu */}
+            <div className="sm:hidden">
+              <button
+                onClick={() => setShowMobileActions(!showMobileActions)}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <Menu size={20} className="text-gray-600" />
+              </button>
+              
+              {showMobileActions && (
+                <div className="absolute right-3 top-14 mt-1 w-56 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
+                  <div className="p-2 space-y-1">
+                    {/* Mobile Search Toggle */}
+                    <button
+                      onClick={() => {
+                        setShowMobileSearch(true);
+                        setShowMobileActions(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-lg text-gray-700 font-medium flex items-center gap-2 text-sm"
+                    >
+                      <Search size={16} />
+                      Search
+                    </button>
+
+                    {/* Mobile Select Mode */}
+                    <button
+                      onClick={() => {
+                        setSelectMode(!selectMode);
+                        setShowMobileActions(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 hover:bg-gray-50 rounded-lg flex items-center gap-2 text-sm ${
+                        selectMode ? 'text-blue-600 font-medium' : 'text-gray-700'
+                      }`}
+                    >
+                      <CheckCheck size={16} />
+                      {selectMode ? 'Exit Select Mode' : 'Select Multiple'}
+                    </button>
+
+                    {/* Mobile Refresh */}
+                    <button
+                      onClick={handleRefresh}
+                      disabled={isLoading}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-lg text-gray-700 font-medium flex items-center gap-2 text-sm disabled:opacity-50"
+                    >
+                      <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+                      Refresh
+                    </button>
+
+                    {/* Mobile Mark All Read */}
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={handleMarkAllAsRead}
+                        className="w-full text-left px-4 py-3 hover:bg-blue-50 rounded-lg text-blue-600 font-medium flex items-center gap-2 text-sm"
+                      >
+                        <CheckCheck size={16} />
+                        Mark All Read ({unreadCount})
+                      </button>
+                    )}
+
+                    {/* Mobile Delete Selected */}
+                    {selectMode && selectedNotifications.length > 0 && (
+                      <button
+                        onClick={handleDeleteSelected}
+                        className="w-full text-left px-4 py-3 hover:bg-red-50 rounded-lg text-red-600 font-medium flex items-center gap-2 text-sm"
+                      >
+                        <Trash2 size={16} />
+                        Delete ({selectedNotifications.length})
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 mt-6">
+          {/* Mobile Search Bar */}
+          {showMobileSearch && (
+            <div className="sm:hidden mt-3 relative">
+              <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+              <input
+                type="text"
+                placeholder="Search notifications..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-10 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm"
+                autoFocus
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={16} />
+                </button>
+              )}
+              <button
+                onClick={() => setShowMobileSearch(false)}
+                className="absolute right-10 top-2.5 text-gray-400 hover:text-gray-600"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
+
+          {/* Stats - Mobile Responsive Grid */}
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4 sm:mt-6">
             <StatsCard icon={Inbox} label="Total" value={stats.total} color="blue" />
             <StatsCard icon={Mail} label="Unread" value={stats.unread} color="green" />
             <StatsCard icon={MailOpen} label="Read" value={stats.read} color="gray" />
           </div>
 
-          {/* Filter Tabs */}
-          <div className="bg-white py-3 mt-2 border-t border-gray-100">
-            <div className="flex items-center gap-2">
+          {/* Filter Tabs - Scrollable on Mobile */}
+          <div className="bg-white py-2 sm:py-3 mt-2 border-t border-gray-100 overflow-x-auto">
+            <div className="flex items-center gap-1 sm:gap-2 min-w-max sm:min-w-0">
               <button
                 onClick={() => handleFilterChange('all')}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition-all whitespace-nowrap ${
                   filter === 'all'
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -1345,7 +1471,7 @@ export default function NotificationsPage() {
               </button>
               <button
                 onClick={() => handleFilterChange('unread')}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition-all whitespace-nowrap ${
                   filter === 'unread'
                     ? 'bg-green-600 text-white shadow-md'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -1355,7 +1481,7 @@ export default function NotificationsPage() {
               </button>
               <button
                 onClick={() => handleFilterChange('read')}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm transition-all whitespace-nowrap ${
                   filter === 'read'
                     ? 'bg-gray-600 text-white shadow-md'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -1366,32 +1492,35 @@ export default function NotificationsPage() {
             </div>
           </div>
 
-          {/* Select Mode */}
+          {/* Select Mode - Mobile Responsive */}
           {selectMode && paginatedNotifications.length > 0 && (
-            <div className="bg-gray-50 rounded-lg p-3 mt-2 border border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
+            <div className="bg-gray-50 rounded-lg p-2 sm:p-3 mt-2 border border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex items-center gap-2 sm:gap-4">
+                  <label className="flex items-center gap-1.5 sm:gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={selectedNotifications.length === paginatedNotifications.length}
                       onChange={handleSelectAll}
                       className="w-4 h-4 text-blue-600 rounded"
                     />
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-xs sm:text-sm font-medium text-gray-700">
                       {selectedNotifications.length === paginatedNotifications.length
                         ? 'Deselect all'
                         : 'Select all'
                       }
                     </span>
                   </label>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-xs sm:text-sm text-gray-500">
                     {selectedNotifications.length} selected
                   </span>
                 </div>
                 <button
-                  onClick={() => setSelectMode(false)}
-                  className="text-sm text-gray-500 hover:text-gray-700 font-medium"
+                  onClick={() => {
+                    setSelectMode(false);
+                    setSelectedNotifications([]);
+                  }}
+                  className="text-xs sm:text-sm text-gray-500 hover:text-gray-700 font-medium self-end sm:self-auto"
                 >
                   Cancel
                 </button>
@@ -1401,25 +1530,25 @@ export default function NotificationsPage() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content - Mobile Responsive */}
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Loading */}
         {isLoading && paginatedNotifications.length === 0 && (
-          <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading notifications...</p>
+          <div className="bg-white rounded-xl shadow-sm p-8 sm:p-12 text-center">
+            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-2 border-blue-600 border-t-transparent mx-auto"></div>
+            <p className="mt-3 sm:mt-4 text-sm sm:text-base text-gray-600">Loading notifications...</p>
           </div>
         )}
 
         {/* Error */}
         {error && !isLoading && (
-          <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-            <AlertCircle size={48} className="text-red-400 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-red-600 mb-2">Failed to load notifications</h3>
-            <p className="text-gray-500 mb-4">{error}</p>
+          <div className="bg-white rounded-xl shadow-sm p-8 sm:p-12 text-center">
+            <AlertCircle size={36} className="text-red-400 mx-auto mb-3 sm:w-12 sm:h-12" />
+            <h3 className="text-base sm:text-lg font-bold text-red-600 mb-2">Failed to load notifications</h3>
+            <p className="text-sm sm:text-base text-gray-500 mb-4">{error}</p>
             <button
               onClick={handleRefresh}
-              className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+              className="px-4 sm:px-6 py-2 sm:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm sm:text-base"
             >
               Try Again
             </button>
@@ -1439,25 +1568,25 @@ export default function NotificationsPage() {
                 {paginatedNotifications.map((notification) => (
                   <div
                     key={notification._id}
-                    className={`p-4 ${getNotificationBg(notification.type, notification.isRead)} transition-all ${
-                      selectMode ? 'pl-6' : ''
-                    } ${!notification.isRead ? 'border-l-4 border-l-blue-500' : ''}`}
+                    className={`p-3 sm:p-4 ${getNotificationBg(notification.type, notification.isRead)} transition-all ${
+                      selectMode ? 'pl-4 sm:pl-6' : ''
+                    } ${!notification.isRead ? 'border-l-3 sm:border-l-4 border-l-blue-500' : ''}`}
                   >
-                    <div className="flex items-start gap-4">
+                    <div className="flex items-start gap-2 sm:gap-4">
                       {/* Select checkbox */}
                       {selectMode && (
-                        <div className="pt-2">
+                        <div className="pt-1 sm:pt-2">
                           <input
                             type="checkbox"
                             checked={selectedNotifications.includes(notification._id)}
                             onChange={() => handleSelect(notification._id)}
-                            className="w-4 h-4 text-blue-600 rounded"
+                            className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 rounded"
                           />
                         </div>
                       )}
 
                       {/* Icon */}
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                         notification.isRead ? 'bg-gray-100' : 'bg-gradient-to-br from-blue-50 to-indigo-50 shadow-sm'
                       }`}>
                         <NotificationIcon type={notification.type} isRead={notification.isRead} />
@@ -1465,10 +1594,10 @@ export default function NotificationsPage() {
 
                       {/* Content */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1 flex-wrap">
-                              <h3 className={`font-semibold ${
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
+                              <h3 className={`text-xs sm:text-sm font-semibold truncate ${
                                 notification.isRead ? 'text-gray-700' : 'text-gray-900'
                               }`}>
                                 {notification.title}
@@ -1480,15 +1609,15 @@ export default function NotificationsPage() {
                               />
                             </div>
                             
-                            <p className={`text-sm mb-2 ${
+                            <p className={`text-xs sm:text-sm mb-1.5 sm:mb-2 line-clamp-2 ${
                               notification.isRead ? 'text-gray-500' : 'text-gray-600'
                             }`}>
                               {notification.message}
                             </p>
                             
-                            <div className="flex items-center gap-3 text-xs">
-                              <span className="text-gray-400 flex items-center gap-1">
-                                <Clock size={12} />
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[10px] sm:text-xs">
+                              <span className="text-gray-400 flex items-center gap-0.5 sm:gap-1">
+                                <Clock size={10} className="sm:w-3 sm:h-3" />
                                 {formatTimeAgo(notification.createdAt)}
                               </span>
                               
@@ -1496,38 +1625,39 @@ export default function NotificationsPage() {
                                 notification.reference?.workId || 
                                 notification.reference?.garmentId) && (
                                 <>
-                                  <span className="text-gray-300">•</span>
-                                  {/* 🔥 FIXED: Link with NO onClick - just navigation */}
+                                  <span className="text-gray-300 hidden sm:inline">•</span>
                                   <Link
                                     to={getNotificationLink(notification)}
-                                    className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                                    className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-0.5 sm:gap-1"
+                                    onClick={() => setShowMobileActions(false)}
                                   >
-                                    View Details
-                                    <Eye size={12} />
+                                    <span className="hidden sm:inline">View Details</span>
+                                    <span className="sm:hidden">View</span>
+                                    <Eye size={10} className="sm:w-3 sm:h-3" />
                                   </Link>
                                 </>
                               )}
                             </div>
                           </div>
 
-                          {/* Actions - ONLY here we have mark as read button */}
+                          {/* Actions - Mobile Responsive */}
                           {!selectMode && (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 sm:gap-2 self-end sm:self-start">
                               {!notification.isRead && (
                                 <button
                                   onClick={() => handleMarkAsRead(notification._id)}
-                                  className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-all"
+                                  className="p-1.5 sm:p-2 text-green-600 hover:bg-green-50 rounded-lg transition-all"
                                   title="Mark as read"
                                 >
-                                  <Check size={16} />
+                                  <Check size={14} className="sm:w-4 sm:h-4" />
                                 </button>
                               )}
                               <button
                                 onClick={() => handleDelete(notification._id)}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                className="p-1.5 sm:p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
                                 title="Delete"
                               >
-                                <Trash2 size={16} />
+                                <Trash2 size={14} className="sm:w-4 sm:h-4" />
                               </button>
                             </div>
                           )}
@@ -1539,40 +1669,45 @@ export default function NotificationsPage() {
               </div>
             </div>
 
-            {/* Pagination */}
+            {/* Pagination - Mobile Responsive */}
             {totalPages > 1 && (
-              <div className="mt-6 flex items-center justify-between bg-white rounded-xl shadow-sm px-4 py-3 border border-gray-200">
-                <div className="flex items-center gap-2">
+              <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white rounded-xl shadow-sm px-3 sm:px-4 py-2 sm:py-3 border border-gray-200">
+                <div className="flex items-center justify-center sm:justify-start gap-2">
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-50"
+                    className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-50"
                   >
-                    <ChevronLeft size={16} />
+                    <ChevronLeft size={14} className="sm:w-4 sm:h-4" />
                   </button>
-                  <span className="text-sm text-gray-600">
-                    Page {page} of {totalPages}
+                  <span className="text-xs sm:text-sm text-gray-600">
+                    <span className="hidden sm:inline">Page </span>
+                    {page} / {totalPages}
                   </span>
                   <button
                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                     disabled={page === totalPages}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-50"
+                    className="p-1.5 sm:p-2 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-50"
                   >
-                    <ChevronRight size={16} />
+                    <ChevronRight size={14} className="sm:w-4 sm:h-4" />
                   </button>
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-gray-500">
+                
+                <div className="flex items-center justify-between sm:justify-end gap-2 text-xs sm:text-sm">
+                  <span className="text-gray-500 hidden sm:inline">
                     Showing {((page - 1) * limit) + 1} - {Math.min(page * limit, filteredNotifications.length)} of {filteredNotifications.length}
+                  </span>
+                  <span className="text-gray-500 sm:hidden">
+                    {((page - 1) * limit) + 1}-{Math.min(page * limit, filteredNotifications.length)} of {filteredNotifications.length}
                   </span>
                   <select
                     value={limit}
                     onChange={handleLimitChange}
-                    className="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                    className="border border-gray-200 rounded-lg px-1.5 sm:px-2 py-1 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
                   >
-                    <option value={10}>10 per page</option>
-                    <option value={20}>20 per page</option>
-                    <option value={50}>50 per page</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
                   </select>
                 </div>
               </div>
@@ -1581,14 +1716,14 @@ export default function NotificationsPage() {
         )}
       </div>
 
-      {/* Scroll to Top */}
+      {/* Scroll to Top - Mobile Responsive */}
       {!selectMode && filteredNotifications.length > 0 && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-6 right-6 p-3 bg-blue-600 rounded-full shadow-lg hover:shadow-xl transition-all text-white z-40"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 p-2 sm:p-3 bg-blue-600 rounded-full shadow-lg hover:shadow-xl transition-all text-white z-40"
           title="Scroll to top"
         >
-          <ChevronLeft size={20} className="rotate-90" />
+          <ChevronLeft size={16} className="rotate-90 sm:w-5 sm:h-5" />
         </button>
       )}
     </div>

@@ -1,4 +1,5 @@
 // // controllers/notification.controller.js
+// import mongoose from 'mongoose';  // ✅ ADD THIS!
 // import Notification from '../models/Notification.js';
 // import User from '../models/User.js';
 // import CuttingMaster from '../models/CuttingMaster.js';
@@ -31,7 +32,17 @@
 //   }
 // };
 
-// // @desc    Create notification (internal function) - UPDATED with recipientModel
+// // Helper function to safely convert to ObjectId
+// const toObjectId = (id) => {
+//   if (!id) return null;
+//   if (id instanceof mongoose.Types.ObjectId) return id;
+//   if (mongoose.Types.ObjectId.isValid(id)) {
+//     return new mongoose.Types.ObjectId(id);
+//   }
+//   return null;
+// };
+
+// // @desc    Create notification (internal function) - UPDATED with ObjectId conversion
 // export const createNotification = async ({
 //   type,
 //   recipient,
@@ -39,7 +50,7 @@
 //   message,
 //   reference,
 //   priority = 'normal',
-//   recipientModel = 'User'  // ✅ NEW: Specify which model recipient belongs to
+//   recipientModel = 'User'
 // }) => {
 //   console.log('\n🔔 ===== CREATE NOTIFICATION STARTED =====');
 //   console.log('📌 Type:', type);
@@ -51,6 +62,15 @@
 //   console.log('📋 Recipient Model:', recipientModel);
   
 //   try {
+//     // ✅ Convert recipient to ObjectId if it's a string
+//     const recipientId = toObjectId(recipient);
+    
+//     if (!recipientId) {
+//       throw new Error(`Invalid recipient ID: ${recipient}`);
+//     }
+    
+//     console.log('✅ Converted recipient to ObjectId:', recipientId);
+
 //     // If recipient is null, send to all users of a specific role
 //     if (!recipient) {
 //       console.log('🔍 No specific recipient, finding all users by role...');
@@ -80,8 +100,8 @@
       
 //       const notifications = users.map(user => ({
 //         type,
-//         recipient: user._id,
-//         recipientModel: bulkRecipientModel,  // ✅ Set correct model
+//         recipient: toObjectId(user._id),  // ✅ Convert each recipient
+//         recipientModel: bulkRecipientModel,
 //         title,
 //         message,
 //         reference,
@@ -98,7 +118,7 @@
 //     }
 
 //     // Send to specific recipient
-//     console.log(`📝 Creating notification for specific recipient: ${recipient}`);
+//     console.log(`📝 Creating notification for specific recipient: ${recipientId}`);
 //     console.log(`📋 Using recipient model: ${recipientModel}`);
     
 //     // Check if recipient exists in the specified model
@@ -119,19 +139,20 @@
 //         Model = User;
 //     }
     
-//     recipientExists = await Model.findById(recipient).lean();
+//     recipientExists = await Model.findById(recipientId).lean();
     
 //     if (!recipientExists) {
-//       console.log(`⚠️ Recipient not found in ${recipientModel} collection: ${recipient}`);
+//       console.log(`⚠️ Recipient not found in ${recipientModel} collection: ${recipientId}`);
 //       // Still create notification - maybe they exist in another collection
 //     } else {
 //       console.log(`✅ Recipient found in ${recipientModel}: ${recipientExists.name}`);
 //     }
     
+//     // ✅ Create notification with ObjectId recipient
 //     const notification = await Notification.create({
 //       type,
-//       recipient,
-//       recipientModel,  // ✅ Save which model this recipient belongs to
+//       recipient: recipientId,  // ✅ This is now ObjectId
+//       recipientModel,
 //       title,
 //       message,
 //       reference,
@@ -145,6 +166,7 @@
 //     console.log(`   Type: ${notification.type}`);
 //     console.log(`   Recipient: ${notification.recipient}`);
 //     console.log(`   Model: ${notification.recipientModel}`);
+//     console.log(`   Recipient Type: ${typeof notification.recipient}`);  // Should be object
 //     console.log('🔔 ===== CREATE NOTIFICATION COMPLETED =====\n');
 //     return notification;
     
@@ -159,7 +181,7 @@
 //   }
 // };
 
-// // @desc    Get user notifications - UPDATED with recipientModel
+// // @desc    Get user notifications - UPDATED with better query
 // // @route   GET /api/notifications
 // // @access  Private
 // export const getNotifications = async (req, res) => {
@@ -172,28 +194,46 @@
 //     const { page = 1, limit = 20, unreadOnly = false } = req.query;
 //     console.log('📄 Query params:', { page, limit, unreadOnly });
 
+//     // ✅ Get user ID as both string and ObjectId for safety
+//     const userId = req.user._id;
+//     const userIdStr = userId.toString();
+    
+//     console.log('🔍 User ID (ObjectId):', userId);
+//     console.log('🔍 User ID (String):', userIdStr);
+
 //     // ✅ Determine recipient model based on user role
 //     const recipientModel = getRecipientModel(req.user?.role);
     
-//     // Build filter
-//     const filter = { 
-//       recipient: req.user._id,
-//       recipientModel  // ✅ Filter by model as well
+//     // ✅ Build filter with multiple possibilities
+//     const filter = {
+//       $or: [
+//         { recipient: userId },        // ObjectId
+//         { recipient: userIdStr }       // String (for legacy data)
+//       ],
+//       recipientModel
 //     };
     
 //     if (unreadOnly === 'true') filter.isRead = false;
 
-//     console.log('🔍 Filter:', JSON.stringify(filter));
+//     console.log('🔍 Filter:', JSON.stringify(filter, null, 2));
 
 //     const skip = (parseInt(page) - 1) * parseInt(limit);
 //     console.log(`📊 Pagination: Skip ${skip}, Limit ${limit}`);
 
-//     // Get total counts
-//     const totalInDB = await Notification.countDocuments({ recipient: req.user._id });
+//     // Get total counts - using $or for safety
+//     const totalInDB = await Notification.countDocuments({
+//       $or: [
+//         { recipient: userId },
+//         { recipient: userIdStr }
+//       ]
+//     });
 //     console.log(`📊 Total notifications in DB for user: ${totalInDB}`);
 
 //     const unreadInDB = await Notification.countDocuments({ 
-//       recipient: req.user._id, 
+//       $or: [
+//         { recipient: userId },
+//         { recipient: userIdStr }
+//       ],
 //       isRead: false 
 //     });
 //     console.log(`📊 Unread notifications in DB: ${unreadInDB}`);
@@ -216,14 +256,15 @@
 //         title: notifications[0].title,
 //         read: notifications[0].isRead,
 //         model: notifications[0].recipientModel,
+//         recipient: notifications[0].recipient,
+//         recipientType: typeof notifications[0].recipient,
 //         createdAt: notifications[0].createdAt
 //       });
 //     }
 
 //     const total = await Notification.countDocuments(filter);
 //     const unreadCount = await Notification.countDocuments({
-//       recipient: req.user._id,
-//       recipientModel,
+//       ...filter,
 //       isRead: false
 //     });
 
@@ -289,7 +330,7 @@
 //       title: notification.title
 //     });
 
-//     // Check if notification belongs to user
+//     // Check if notification belongs to user (compare as strings)
 //     if (notification.recipient.toString() !== req.user._id.toString()) {
 //       console.log('❌ Unauthorized access - notification belongs to different user');
 //       console.log(`   Notification recipient: ${notification.recipient}`);
@@ -331,11 +372,15 @@
 //   console.log('👤 User Role:', req.user?.role);
   
 //   try {
-//     // ✅ Determine recipient model based on user role
+//     const userId = req.user._id;
+//     const userIdStr = userId.toString();
 //     const recipientModel = getRecipientModel(req.user?.role);
     
 //     const count = await Notification.countDocuments({
-//       recipient: req.user._id,
+//       $or: [
+//         { recipient: userId },
+//         { recipient: userIdStr }
+//       ],
 //       recipientModel,
 //       isRead: false
 //     });
@@ -390,7 +435,7 @@
 //       currentReadStatus: notification.isRead
 //     });
 
-//     // Check if notification belongs to user
+//     // Check if notification belongs to user (compare as strings)
 //     if (notification.recipient.toString() !== req.user._id.toString()) {
 //       console.log('❌ Unauthorized access - notification belongs to different user');
 //       return res.status(403).json({
@@ -434,12 +479,16 @@
 //   console.log('👤 User Role:', req.user?.role);
   
 //   try {
-//     // ✅ Determine recipient model based on user role
+//     const userId = req.user._id;
+//     const userIdStr = userId.toString();
 //     const recipientModel = getRecipientModel(req.user?.role);
     
 //     // First check how many unread exist
 //     const unreadCount = await Notification.countDocuments({
-//       recipient: req.user._id,
+//       $or: [
+//         { recipient: userId },
+//         { recipient: userIdStr }
+//       ],
 //       recipientModel,
 //       isRead: false
 //     });
@@ -448,7 +497,10 @@
 
 //     const result = await Notification.updateMany(
 //       { 
-//         recipient: req.user._id,
+//         $or: [
+//           { recipient: userId },
+//           { recipient: userIdStr }
+//         ],
 //         recipientModel,
 //         isRead: false 
 //       },
@@ -504,7 +556,7 @@
 //       recipientModel: notification.recipientModel
 //     });
 
-//     // Check if notification belongs to user
+//     // Check if notification belongs to user (compare as strings)
 //     if (notification.recipient.toString() !== req.user._id.toString()) {
 //       console.log('❌ Unauthorized access - notification belongs to different user');
 //       return res.status(403).json({
@@ -563,7 +615,7 @@
     
 //     const notifications = users.map(user => ({
 //       type,
-//       recipient: user._id,
+//       recipient: toObjectId(user._id),  // ✅ Convert each recipient
 //       recipientModel,
 //       title,
 //       message,
@@ -597,8 +649,15 @@
 //   }
 // };
 
+
+
+
+
+
+
+
 // controllers/notification.controller.js
-import mongoose from 'mongoose';  // ✅ ADD THIS!
+import mongoose from 'mongoose';
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 import CuttingMaster from '../models/CuttingMaster.js';
@@ -631,6 +690,25 @@ const findUsersByRole = async (role) => {
   }
 };
 
+// ✅ NEW: Find both Admin and Store Keeper users
+const findAdminAndStoreKeepers = async () => {
+  console.log('🔍 Finding Admin and Store Keeper users');
+  
+  // Find Admin users from User collection
+  const admins = await User.find({ role: 'ADMIN' }).lean();
+  
+  // Find Store Keepers from StoreKeeper collection
+  const storeKeepers = await StoreKeeper.find({ isActive: true }).lean();
+  
+  // Combine both arrays
+  const allUsers = [...admins, ...storeKeepers];
+  
+  console.log(`✅ Found ${admins.length} Admins and ${storeKeepers.length} Store Keepers`);
+  console.log(`✅ Total: ${allUsers.length} users`);
+  
+  return allUsers;
+};
+
 // Helper function to safely convert to ObjectId
 const toObjectId = (id) => {
   if (!id) return null;
@@ -641,7 +719,7 @@ const toObjectId = (id) => {
   return null;
 };
 
-// @desc    Create notification (internal function) - UPDATED with ObjectId conversion
+// @desc    Create notification (internal function) - UPDATED with Admin+StoreKeeper sharing
 export const createNotification = async ({
   type,
   recipient,
@@ -661,113 +739,131 @@ export const createNotification = async ({
   console.log('📋 Recipient Model:', recipientModel);
   
   try {
-    // ✅ Convert recipient to ObjectId if it's a string
-    const recipientId = toObjectId(recipient);
-    
-    if (!recipientId) {
-      throw new Error(`Invalid recipient ID: ${recipient}`);
-    }
-    
-    console.log('✅ Converted recipient to ObjectId:', recipientId);
+    // ✅ CASE 1: Send to specific recipient
+    if (recipient) {
+      const recipientId = toObjectId(recipient);
+      
+      if (!recipientId) {
+        throw new Error(`Invalid recipient ID: ${recipient}`);
+      }
+      
+      console.log('✅ Converted recipient to ObjectId:', recipientId);
 
-    // If recipient is null, send to all users of a specific role
-    if (!recipient) {
-      console.log('🔍 No specific recipient, finding all users by role...');
+      // Check if recipient exists in the specified model
+      let recipientExists = null;
+      let Model = null;
       
-      // Determine role based on notification type
-      let targetRole = 'CUTTING_MASTER';
-      if (type.includes('delivery') || type.includes('order')) {
-        targetRole = 'STORE_KEEPER';
-      } else if (type.includes('tailor')) {
-        targetRole = 'TAILOR';
+      switch(recipientModel) {
+        case 'CuttingMaster':
+          Model = CuttingMaster;
+          break;
+        case 'StoreKeeper':
+          Model = StoreKeeper;
+          break;
+        case 'Tailor':
+          Model = Tailor;
+          break;
+        default:
+          Model = User;
       }
       
-      const users = await findUsersByRole(targetRole);
+      recipientExists = await Model.findById(recipientId).lean();
       
-      console.log(`✅ Found ${users.length} users with role ${targetRole}:`);
-      users.forEach((user, index) => {
-        console.log(`   ${index + 1}. ${user.name} (ID: ${user._id})`);
-      });
-      
-      if (users.length === 0) {
-        console.log(`⚠️ No ${targetRole} found - notifications not sent`);
-        return [];
+      if (!recipientExists) {
+        console.log(`⚠️ Recipient not found in ${recipientModel} collection: ${recipientId}`);
+        // Still create notification - maybe they exist in another collection
+      } else {
+        console.log(`✅ Recipient found in ${recipientModel}: ${recipientExists.name}`);
       }
       
-      // Determine recipient model for these users
-      const bulkRecipientModel = getRecipientModel(targetRole);
-      
-      const notifications = users.map(user => ({
+      // ✅ Create single notification
+      const notification = await Notification.create({
         type,
-        recipient: toObjectId(user._id),  // ✅ Convert each recipient
-        recipientModel: bulkRecipientModel,
+        recipient: recipientId,
+        recipientModel,
         title,
         message,
         reference,
         priority,
         isRead: false,
         createdAt: new Date()
-      }));
-      
-      console.log(`📝 Creating ${notifications.length} notifications...`);
-      const result = await Notification.insertMany(notifications);
-      console.log(`✅ Successfully created ${result.length} notifications`);
+      });
+
+      console.log(`✅ Notification created successfully!`);
+      console.log(`   ID: ${notification._id}`);
       console.log('🔔 ===== CREATE NOTIFICATION COMPLETED =====\n');
-      return result;
-    }
-
-    // Send to specific recipient
-    console.log(`📝 Creating notification for specific recipient: ${recipientId}`);
-    console.log(`📋 Using recipient model: ${recipientModel}`);
-    
-    // Check if recipient exists in the specified model
-    let recipientExists = null;
-    let Model = null;
-    
-    switch(recipientModel) {
-      case 'CuttingMaster':
-        Model = CuttingMaster;
-        break;
-      case 'StoreKeeper':
-        Model = StoreKeeper;
-        break;
-      case 'Tailor':
-        Model = Tailor;
-        break;
-      default:
-        Model = User;
+      return notification;
     }
     
-    recipientExists = await Model.findById(recipientId).lean();
+    // ✅ CASE 2: No specific recipient - determine target roles based on notification type
+    console.log('🔍 No specific recipient, finding target users based on notification type...');
     
-    if (!recipientExists) {
-      console.log(`⚠️ Recipient not found in ${recipientModel} collection: ${recipientId}`);
-      // Still create notification - maybe they exist in another collection
+    // Determine target roles based on notification type
+    let targetUsers = [];
+    
+    // 🔥 FIX: Admin and Store Keeper share all notifications
+    if (type.includes('admin') || type.includes('store') || 
+        type.includes('order') || type.includes('delivery') ||
+        type.includes('work') || type.includes('cutting') ||
+        type.includes('tailor') || type.includes('inventory')) {
+      
+      // Send to BOTH Admin AND Store Keeper
+      console.log('📢 This notification should go to Admin AND Store Keeper');
+      targetUsers = await findAdminAndStoreKeepers();
+      
+    } else if (type.includes('cutting')) {
+      // Cutting related - go to Cutting Masters
+      console.log('✂️ Cutting notification - sending to Cutting Masters');
+      targetUsers = await findUsersByRole('CUTTING_MASTER');
+      
+    } else if (type.includes('tailor')) {
+      // Tailor related
+      console.log('👔 Tailor notification - sending to Tailors');
+      targetUsers = await findUsersByRole('TAILOR');
+      
     } else {
-      console.log(`✅ Recipient found in ${recipientModel}: ${recipientExists.name}`);
+      // Default - send to Admin and Store Keeper
+      console.log('📢 Default notification - sending to Admin and Store Keeper');
+      targetUsers = await findAdminAndStoreKeepers();
     }
     
-    // ✅ Create notification with ObjectId recipient
-    const notification = await Notification.create({
-      type,
-      recipient: recipientId,  // ✅ This is now ObjectId
-      recipientModel,
-      title,
-      message,
-      reference,
-      priority,
-      isRead: false,
-      createdAt: new Date()
+    console.log(`✅ Found ${targetUsers.length} target users`);
+    
+    if (targetUsers.length === 0) {
+      console.log('⚠️ No target users found - notifications not sent');
+      return [];
+    }
+    
+    // Determine recipient model for each user
+    const notifications = targetUsers.map(user => {
+      // Determine recipient model based on user type
+      let userRecipientModel = 'User';
+      if (user.role === 'STORE_KEEPER' || user.collectionName === 'storekeepers') {
+        userRecipientModel = 'StoreKeeper';
+      } else if (user.role === 'CUTTING_MASTER') {
+        userRecipientModel = 'CuttingMaster';
+      } else if (user.role === 'TAILOR') {
+        userRecipientModel = 'Tailor';
+      }
+      
+      return {
+        type,
+        recipient: toObjectId(user._id),
+        recipientModel: userRecipientModel,
+        title,
+        message,
+        reference,
+        priority,
+        isRead: false,
+        createdAt: new Date()
+      };
     });
-
-    console.log(`✅ Notification created successfully!`);
-    console.log(`   ID: ${notification._id}`);
-    console.log(`   Type: ${notification.type}`);
-    console.log(`   Recipient: ${notification.recipient}`);
-    console.log(`   Model: ${notification.recipientModel}`);
-    console.log(`   Recipient Type: ${typeof notification.recipient}`);  // Should be object
+    
+    console.log(`📝 Creating ${notifications.length} notifications...`);
+    const result = await Notification.insertMany(notifications);
+    console.log(`✅ Successfully created ${result.length} notifications`);
     console.log('🔔 ===== CREATE NOTIFICATION COMPLETED =====\n');
-    return notification;
+    return result;
     
   } catch (error) {
     console.error('\n❌ ===== CREATE NOTIFICATION ERROR =====');
@@ -780,7 +876,7 @@ export const createNotification = async ({
   }
 };
 
-// @desc    Get user notifications - UPDATED with better query
+// @desc    Get user notifications
 // @route   GET /api/notifications
 // @access  Private
 export const getNotifications = async (req, res) => {
@@ -793,21 +889,18 @@ export const getNotifications = async (req, res) => {
     const { page = 1, limit = 20, unreadOnly = false } = req.query;
     console.log('📄 Query params:', { page, limit, unreadOnly });
 
-    // ✅ Get user ID as both string and ObjectId for safety
     const userId = req.user._id;
     const userIdStr = userId.toString();
     
     console.log('🔍 User ID (ObjectId):', userId);
     console.log('🔍 User ID (String):', userIdStr);
 
-    // ✅ Determine recipient model based on user role
     const recipientModel = getRecipientModel(req.user?.role);
     
-    // ✅ Build filter with multiple possibilities
     const filter = {
       $or: [
-        { recipient: userId },        // ObjectId
-        { recipient: userIdStr }       // String (for legacy data)
+        { recipient: userId },
+        { recipient: userIdStr }
       ],
       recipientModel
     };
@@ -819,25 +912,6 @@ export const getNotifications = async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
     console.log(`📊 Pagination: Skip ${skip}, Limit ${limit}`);
 
-    // Get total counts - using $or for safety
-    const totalInDB = await Notification.countDocuments({
-      $or: [
-        { recipient: userId },
-        { recipient: userIdStr }
-      ]
-    });
-    console.log(`📊 Total notifications in DB for user: ${totalInDB}`);
-
-    const unreadInDB = await Notification.countDocuments({ 
-      $or: [
-        { recipient: userId },
-        { recipient: userIdStr }
-      ],
-      isRead: false 
-    });
-    console.log(`📊 Unread notifications in DB: ${unreadInDB}`);
-
-    // Get notifications with filter
     const notifications = await Notification.find(filter)
       .populate('reference.orderId', 'orderId')
       .populate('reference.workId', 'workId')
@@ -847,19 +921,6 @@ export const getNotifications = async (req, res) => {
       .limit(parseInt(limit));
 
     console.log(`✅ Found ${notifications.length} notifications for this page`);
-    
-    if (notifications.length > 0) {
-      console.log('📋 Sample first notification:', {
-        id: notifications[0]._id,
-        type: notifications[0].type,
-        title: notifications[0].title,
-        read: notifications[0].isRead,
-        model: notifications[0].recipientModel,
-        recipient: notifications[0].recipient,
-        recipientType: typeof notifications[0].recipient,
-        createdAt: notifications[0].createdAt
-      });
-    }
 
     const total = await Notification.countDocuments(filter);
     const unreadCount = await Notification.countDocuments({
@@ -886,9 +947,7 @@ export const getNotifications = async (req, res) => {
 
   } catch (error) {
     console.error('\n❌ ===== GET NOTIFICATIONS ERROR =====');
-    console.error('Error name:', error.name);
     console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
     console.error('❌ ===== ERROR END =====\n');
     
     res.status(500).json({
@@ -899,13 +958,12 @@ export const getNotifications = async (req, res) => {
   }
 };
 
-// @desc    Get notification by ID - UPDATED with authorization check
+// @desc    Get notification by ID
 // @route   GET /api/notifications/:id
 // @access  Private
 export const getNotificationById = async (req, res) => {
   console.log('\n🔍 ===== GET NOTIFICATION BY ID STARTED =====');
   console.log('🔖 Notification ID:', req.params.id);
-  console.log('👤 User ID:', req.user?._id || req.user?.id);
   
   try {
     const notification = await Notification.findById(req.params.id)
@@ -921,39 +979,21 @@ export const getNotificationById = async (req, res) => {
       });
     }
 
-    console.log('✅ Notification found:', {
-      id: notification._id,
-      type: notification.type,
-      recipient: notification.recipient,
-      recipientModel: notification.recipientModel,
-      title: notification.title
-    });
-
-    // Check if notification belongs to user (compare as strings)
     if (notification.recipient.toString() !== req.user._id.toString()) {
-      console.log('❌ Unauthorized access - notification belongs to different user');
-      console.log(`   Notification recipient: ${notification.recipient}`);
-      console.log(`   Current user: ${req.user._id}`);
+      console.log('❌ Unauthorized access');
       return res.status(403).json({
         success: false,
         message: 'Not authorized to view this notification'
       });
     }
 
-    console.log('🔍 ===== GET NOTIFICATION BY ID COMPLETED =====\n');
-    
     res.json({
       success: true,
       data: notification
     });
 
   } catch (error) {
-    console.error('\n❌ ===== GET NOTIFICATION BY ID ERROR =====');
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    console.error('❌ ===== ERROR END =====\n');
-    
+    console.error('❌ Error:', error.message);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch notification',
@@ -962,13 +1002,12 @@ export const getNotificationById = async (req, res) => {
   }
 };
 
-// @desc    Get unread count - UPDATED with recipientModel
+// @desc    Get unread count
 // @route   GET /api/notifications/unread-count
 // @access  Private
 export const getUnreadCount = async (req, res) => {
   console.log('\n🔢 ===== GET UNREAD COUNT STARTED =====');
   console.log('👤 User ID:', req.user?._id || req.user?.id);
-  console.log('👤 User Role:', req.user?.role);
   
   try {
     const userId = req.user._id;
@@ -993,12 +1032,7 @@ export const getUnreadCount = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('\n❌ ===== GET UNREAD COUNT ERROR =====');
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    console.error('❌ ===== ERROR END =====\n');
-    
+    console.error('❌ Error:', error.message);
     res.status(500).json({
       success: false,
       message: 'Failed to get unread count',
@@ -1007,13 +1041,12 @@ export const getUnreadCount = async (req, res) => {
   }
 };
 
-// @desc    Mark notification as read - UPDATED with recipientModel
+// @desc    Mark notification as read
 // @route   PATCH /api/notifications/:id/read
 // @access  Private
 export const markAsRead = async (req, res) => {
   console.log('\n✅ ===== MARK NOTIFICATION AS READ STARTED =====');
   console.log('🔖 Notification ID:', req.params.id);
-  console.log('👤 User ID:', req.user?._id || req.user?.id);
   
   try {
     const notification = await Notification.findById(req.params.id);
@@ -1026,17 +1059,8 @@ export const markAsRead = async (req, res) => {
       });
     }
 
-    console.log('📋 Notification found:', {
-      id: notification._id,
-      type: notification.type,
-      recipient: notification.recipient,
-      recipientModel: notification.recipientModel,
-      currentReadStatus: notification.isRead
-    });
-
-    // Check if notification belongs to user (compare as strings)
     if (notification.recipient.toString() !== req.user._id.toString()) {
-      console.log('❌ Unauthorized access - notification belongs to different user');
+      console.log('❌ Unauthorized access');
       return res.status(403).json({
         success: false,
         message: 'Not authorized'
@@ -1046,7 +1070,7 @@ export const markAsRead = async (req, res) => {
     notification.isRead = true;
     await notification.save();
 
-    console.log('✅ Notification marked as read successfully');
+    console.log('✅ Notification marked as read');
     console.log('✅ ===== MARK AS READ COMPLETED =====\n');
 
     res.json({
@@ -1055,12 +1079,7 @@ export const markAsRead = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('\n❌ ===== MARK AS READ ERROR =====');
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    console.error('❌ ===== ERROR END =====\n');
-    
+    console.error('❌ Error:', error.message);
     res.status(500).json({
       success: false,
       message: 'Failed to mark as read',
@@ -1069,31 +1088,18 @@ export const markAsRead = async (req, res) => {
   }
 };
 
-// @desc    Mark all notifications as read - UPDATED with recipientModel
+// @desc    Mark all notifications as read
 // @route   PATCH /api/notifications/mark-all-read
 // @access  Private
 export const markAllAsRead = async (req, res) => {
   console.log('\n✅ ===== MARK ALL NOTIFICATIONS AS READ STARTED =====');
   console.log('👤 User ID:', req.user?._id || req.user?.id);
-  console.log('👤 User Role:', req.user?.role);
   
   try {
     const userId = req.user._id;
     const userIdStr = userId.toString();
     const recipientModel = getRecipientModel(req.user?.role);
     
-    // First check how many unread exist
-    const unreadCount = await Notification.countDocuments({
-      $or: [
-        { recipient: userId },
-        { recipient: userIdStr }
-      ],
-      recipientModel,
-      isRead: false
-    });
-    
-    console.log(`📊 Found ${unreadCount} unread notifications`);
-
     const result = await Notification.updateMany(
       { 
         $or: [
@@ -1115,12 +1121,7 @@ export const markAllAsRead = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('\n❌ ===== MARK ALL AS READ ERROR =====');
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    console.error('❌ ===== ERROR END =====\n');
-    
+    console.error('❌ Error:', error.message);
     res.status(500).json({
       success: false,
       message: 'Failed to mark all as read',
@@ -1129,13 +1130,12 @@ export const markAllAsRead = async (req, res) => {
   }
 };
 
-// @desc    Delete notification - UPDATED with authorization check
+// @desc    Delete notification
 // @route   DELETE /api/notifications/:id
 // @access  Private
 export const deleteNotification = async (req, res) => {
   console.log('\n🗑️ ===== DELETE NOTIFICATION STARTED =====');
   console.log('🔖 Notification ID:', req.params.id);
-  console.log('👤 User ID:', req.user?._id || req.user?.id);
   
   try {
     const notification = await Notification.findById(req.params.id);
@@ -1148,16 +1148,8 @@ export const deleteNotification = async (req, res) => {
       });
     }
 
-    console.log('📋 Notification to delete:', {
-      id: notification._id,
-      type: notification.type,
-      recipient: notification.recipient,
-      recipientModel: notification.recipientModel
-    });
-
-    // Check if notification belongs to user (compare as strings)
     if (notification.recipient.toString() !== req.user._id.toString()) {
-      console.log('❌ Unauthorized access - notification belongs to different user');
+      console.log('❌ Unauthorized access');
       return res.status(403).json({
         success: false,
         message: 'Not authorized'
@@ -1166,7 +1158,7 @@ export const deleteNotification = async (req, res) => {
 
     await notification.deleteOne();
 
-    console.log('✅ Notification deleted successfully');
+    console.log('✅ Notification deleted');
     console.log('🗑️ ===== DELETE NOTIFICATION COMPLETED =====\n');
 
     res.json({
@@ -1175,12 +1167,7 @@ export const deleteNotification = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('\n❌ ===== DELETE NOTIFICATION ERROR =====');
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    console.error('❌ ===== ERROR END =====\n');
-    
+    console.error('❌ Error:', error.message);
     res.status(500).json({
       success: false,
       message: 'Failed to delete notification',
@@ -1202,19 +1189,29 @@ export const sendBulkNotification = async (req, res) => {
     console.log('📌 Type:', type);
     console.log('📝 Title:', title);
     
-    const users = await findUsersByRole(role);
-    const recipientModel = getRecipientModel(role);
+    let targetUsers = [];
     
-    if (users.length === 0) {
+    // 🔥 FIX: If target is ADMIN or STORE_KEEPER, send to both
+    if (role === 'ADMIN' || role === 'STORE_KEEPER' || role === 'ADMIN_STORE') {
+      targetUsers = await findAdminAndStoreKeepers();
+    } else {
+      targetUsers = await findUsersByRole(role);
+    }
+    
+    const recipientModel = role === 'STORE_KEEPER' ? 'StoreKeeper' : 
+                           role === 'CUTTING_MASTER' ? 'CuttingMaster' : 
+                           role === 'TAILOR' ? 'Tailor' : 'User';
+    
+    if (targetUsers.length === 0) {
       return res.status(404).json({
         success: false,
         message: `No users found with role: ${role}`
       });
     }
     
-    const notifications = users.map(user => ({
+    const notifications = targetUsers.map(user => ({
       type,
-      recipient: toObjectId(user._id),  // ✅ Convert each recipient
+      recipient: toObjectId(user._id),
       recipientModel,
       title,
       message,
@@ -1236,10 +1233,7 @@ export const sendBulkNotification = async (req, res) => {
     });
     
   } catch (error) {
-    console.error('\n❌ ===== BULK NOTIFICATION ERROR =====');
-    console.error('Error:', error.message);
-    console.error('❌ ===== ERROR END =====\n');
-    
+    console.error('❌ Error:', error.message);
     res.status(500).json({
       success: false,
       message: 'Failed to send bulk notifications',
