@@ -192,716 +192,6 @@
 //     }
 //   }, [dispatch, canEdit]);
 
-//   // Navigate to new order
-//   const handleNewOrder = useCallback(() => {
-//     logDebug('Navigate to new order', { basePath });
-//     navigate(`${basePath}/orders/new`);
-//   }, [navigate, basePath]);
-
-//   // Handle page change
-//   const handlePageChange = useCallback((newPage) => {
-//     logDebug('Page change requested', { newPage, currentPage, totalPages: pagination?.pages });
-//     if (newPage >= 1 && newPage <= pagination?.pages) {
-//       setCurrentPage(newPage);
-//       dispatch(setPagination({ page: newPage }));
-//     }
-//   }, [pagination?.pages, dispatch]);
-
-//   // Status badge generator
-//   const getStatusBadge = useCallback((status) => {
-//     const statusConfig = {
-//       draft: { bg: "bg-gray-100", text: "text-gray-700", label: "Draft" },
-//       confirmed: { bg: "bg-blue-100", text: "text-blue-700", label: "Confirmed" },
-//       "in-progress": { bg: "bg-yellow-100", text: "text-yellow-700", label: "In Progress" },
-//       delivered: { bg: "bg-green-100", text: "text-green-700", label: "Delivered" },
-//       cancelled: { bg: "bg-red-100", text: "text-red-700", label: "Cancelled" },
-//     };
-//     return statusConfig[status] || statusConfig.draft;
-//   }, []);
-
-//   // Payment status badge generator
-//   const getPaymentStatusBadge = useCallback((status) => {
-//     const statusConfig = {
-//       pending: { bg: "bg-red-100", text: "text-red-700", label: "Pending" },
-//       partial: { bg: "bg-orange-100", text: "text-orange-700", label: "Partial" },
-//       paid: { bg: "bg-green-100", text: "text-green-700", label: "Paid" },
-//       overpaid: { bg: "bg-purple-100", text: "text-purple-700", label: "Overpaid" },
-//     };
-//     return statusConfig[status] || statusConfig.pending;
-//   }, []);
-
-//   // Format currency
-//   const formatCurrency = useCallback((amount) => {
-//     if (!amount && amount !== 0) return "₹0";
-//     return new Intl.NumberFormat('en-IN', {
-//       style: 'currency',
-//       currency: 'INR',
-//       minimumFractionDigits: 0
-//     }).format(amount);
-//   }, []);
-
-//   // Status options
-//   const statusOptions = useMemo(() => [
-//     { value: "all", label: "All Status" },
-//     { value: "draft", label: "Draft" },
-//     { value: "confirmed", label: "Confirmed" },
-//     { value: "in-progress", label: "In Progress" },
-//     { value: "delivered", label: "Delivered" },
-//     { value: "cancelled", label: "Cancelled" },
-//   ], []);
-
-//   // Payment status options
-//   const paymentStatusOptions = useMemo(() => [
-//     { value: "all", label: "All Payments" },
-//     { value: "pending", label: "Pending" },
-//     { value: "partial", label: "Partial" },
-//     { value: "paid", label: "Paid" },
-//     { value: "overpaid", label: "Overpaid" },
-//   ], []);
-
-//   // Time filter options
-//   const timeFilters = useMemo(() => [
-//     { value: "all", label: "All Time" },
-//     { value: "week", label: "This Week" },
-//     { value: "month", label: "This Month" },
-//     { value: "3m", label: "Last 3 Months" },
-//     { value: "6m", label: "Last 6 Months" },
-//     { value: "1y", label: "Last Year" },
-//   ], []);
-
-//   // Error display
-//   if (error) {
-//     return (
-//       <div className="p-8 bg-red-50 border border-red-200 rounded-3xl">
-//         <h2 className="text-xl font-bold text-red-700 mb-2">Error Loading Orders</h2>
-//         <p className="text-red-600">{error}</p>
-//         <button
-//           onClick={() => {
-//             logDebug('Retry fetching orders');
-//             dispatch(fetchOrders({
-//               page: currentPage,
-//               limit: pagination?.limit || 10,
-//               search: debouncedSearch,
-//               status: statusFilter !== "all" ? statusFilter : "",
-//               paymentStatus: paymentStatusFilter !== "all" ? paymentStatusFilter : "",
-//               timeFilter,
-//             }));
-//             dispatch(clearOrderError());
-//           }}
-//           className="mt-4 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700"
-//         >
-//           Retry
-//         </button>
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="space-y-8 animate-in fade-in duration-500">
-//       {/* Debug Panel */}
-//       {DEBUG && process.env.NODE_ENV === 'development' && (
-//         <div className="bg-gray-900 text-green-400 p-4 rounded-3xl font-mono text-sm overflow-auto max-h-40">
-//           <div className="flex justify-between items-center mb-2">
-//             <span className="font-bold">🔍 Debug Info</span>
-//             <button 
-//               onClick={() => console.clear()} 
-//               className="text-xs bg-gray-700 px-2 py-1 rounded"
-//             >
-//               Clear Console
-//             </button>
-//           </div>
-//           <div className="space-y-1">
-//             <div>State: {loading ? '🔄 Loading' : '✅ Idle'}</div>
-//             <div>Orders: {orders?.length || 0}</div>
-//             <div>Page: {currentPage}/{pagination?.pages || 1}</div>
-//             <div>Filters: "{searchTerm}" | Status:{statusFilter} | Payment:{paymentStatusFilter} | Time:{timeFilter}</div>
-//             <div>Permissions: {canEdit ? '✏️ Edit' : '👀 View'}</div>
-//             <div>Base Path: {basePath}</div>
-//             <div>Role: {user?.role}</div>
-//           </div>
-//         </div>
-//       )}
-
-//       {/* Header */}
-//       <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-//         <h1 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">
-//           Orders Management
-//         </h1>
-//         <p className="text-slate-500 font-medium">Manage and track all customer orders with payments</p>
-//       </div>
-
-//       {/* Search and Filter Bar */}
-//       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-//         <div className="relative w-full md:w-96">
-//           <Search className="absolute left-4 top-3.5 text-slate-400" size={20} />
-//           <input
-//             type="text"
-//             placeholder="Search by Order ID or Customer..."
-//             value={searchTerm}
-//             onChange={handleSearch}
-//             className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
-//           />
-//         </div>
-
-//         <div className="flex gap-3 w-full md:w-auto">
-//           {/* Status Filter Dropdown */}
-//           <div className="relative">
-//             <button
-//               onClick={() => {
-//                 setShowFilterMenu(!showFilterMenu);
-//                 setShowPaymentFilterMenu(false);
-//               }}
-//               className="px-4 py-3 bg-white border border-slate-200 rounded-xl font-medium flex items-center gap-2 hover:bg-slate-50 transition-all"
-//             >
-//               <Filter size={18} />
-//               {statusOptions.find(s => s.value === statusFilter)?.label || "Status"}
-//             </button>
-            
-//             {showFilterMenu && (
-//               <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-200 z-10">
-//                 {statusOptions.map((option) => (
-//                   <button
-//                     key={option.value}
-//                     onClick={() => {
-//                       setStatusFilter(option.value);
-//                       setShowFilterMenu(false);
-//                       setCurrentPage(1);
-//                     }}
-//                     className={`w-full text-left px-4 py-3 hover:bg-slate-50 transition-all ${
-//                       statusFilter === option.value ? "bg-blue-50 text-blue-600 font-medium" : ""
-//                     }`}
-//                   >
-//                     {option.label}
-//                   </button>
-//                 ))}
-//               </div>
-//             )}
-//           </div>
-
-//           {/* Payment Status Filter Dropdown */}
-//           <div className="relative">
-//             <button
-//               onClick={() => {
-//                 setShowPaymentFilterMenu(!showPaymentFilterMenu);
-//                 setShowFilterMenu(false);
-//               }}
-//               className="px-4 py-3 bg-white border border-slate-200 rounded-xl font-medium flex items-center gap-2 hover:bg-slate-50 transition-all"
-//             >
-//               <IndianRupee size={18} />
-//               {paymentStatusOptions.find(s => s.value === paymentStatusFilter)?.label || "Payment"}
-//             </button>
-            
-//             {showPaymentFilterMenu && (
-//               <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-200 z-10">
-//                 {paymentStatusOptions.map((option) => (
-//                   <button
-//                     key={option.value}
-//                     onClick={() => {
-//                       setPaymentStatusFilter(option.value);
-//                       setShowPaymentFilterMenu(false);
-//                       setCurrentPage(1);
-//                     }}
-//                     className={`w-full text-left px-4 py-3 hover:bg-slate-50 transition-all ${
-//                       paymentStatusFilter === option.value ? "bg-blue-50 text-blue-600 font-medium" : ""
-//                     }`}
-//                   >
-//                     {option.label}
-//                   </button>
-//                 ))}
-//               </div>
-//             )}
-//           </div>
-
-//           {/* New Order Button */}
-//           {canEdit && (
-//             <button
-//               onClick={handleNewOrder}
-//               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-500/25 flex items-center gap-2"
-//             >
-//               <Plus size={20} />
-//               New Order
-//             </button>
-//           )}
-//         </div>
-//       </div>
-
-//       {/* Time Filters */}
-//       <div className="flex gap-2 overflow-x-auto pb-2">
-//         {timeFilters.map((filter) => (
-//           <button
-//             key={filter.value}
-//             onClick={() => {
-//               setTimeFilter(filter.value);
-//               setCurrentPage(1);
-//             }}
-//             className={`px-4 py-2 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
-//               timeFilter === filter.value
-//                 ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
-//                 : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-//             }`}
-//           >
-//             {filter.label}
-//           </button>
-//         ))}
-//       </div>
-
-//       {/* Orders Table */}
-//       <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-//         <div className="overflow-x-auto">
-//           <table className="w-full">
-//             <thead className="bg-slate-50 border-b border-slate-200">
-//               <tr>
-//                 <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-//                   Order ID
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-//                   Customer
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-//                   Phone
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-//                   Order Date
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-//                   Delivery
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-//                   Garments
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-//                   <div className="flex items-center gap-1">
-//                     <IndianRupee size={14} />
-//                     Total
-//                   </div>
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-//                   <div className="flex items-center gap-1">
-//                     <IndianRupee size={14} />
-//                     Paid
-//                   </div>
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-//                   <div className="flex items-center gap-1">
-//                     <TrendingUp size={14} />
-//                     Balance
-//                   </div>
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-//                   Payment Status
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-//                   Order Status
-//                 </th>
-//                 <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-//                   Actions
-//                 </th>
-//               </tr>
-//             </thead>
-//             <tbody className="divide-y divide-slate-100">
-//               {loading ? (
-//                 <tr>
-//                   <td colSpan="12" className="px-6 py-12 text-center">
-//                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
-//                     <p className="mt-2 text-slate-500">Loading orders...</p>
-//                   </td>
-//                 </tr>
-//               ) : orders?.length > 0 ? (
-//                 orders.map((order) => {
-//                   if (!order) return null;
-                  
-//                   const statusBadge = getStatusBadge(order.status);
-//                   const paymentStatusBadge = getPaymentStatusBadge(order.paymentSummary?.paymentStatus);
-//                   const customer = order.customer || {};
-//                   const isDeleting = deleteLoading[order._id];
-                  
-//                   const totalAmount = order.priceSummary?.totalMax || 0;
-//                   const totalPaid = order.paymentSummary?.totalPaid || 0;
-//                   const balanceAmount = order.balanceAmount || (totalAmount - totalPaid);
-                  
-//                   return (
-//                     <tr key={order._id} className={`hover:bg-slate-50 transition-all ${isDeleting ? 'opacity-50' : ''}`}>
-//                       <td className="px-6 py-4 font-mono font-bold text-blue-600">
-//                         {order.orderId || 'N/A'}
-//                       </td>
-//                       <td className="px-6 py-4">
-//                         <div>
-//                           <p className="font-medium text-slate-800">{customer.name || "N/A"}</p>
-//                           <p className="text-xs text-slate-400">{customer.customerId || ""}</p>
-//                         </div>
-//                       </td>
-//                       <td className="px-6 py-4 text-slate-600">
-//                         {customer.phone || "N/A"}
-//                       </td>
-//                       <td className="px-6 py-4 text-slate-600">
-//                         {order.orderDate ? new Date(order.orderDate).toLocaleDateString() : 'N/A'}
-//                       </td>
-//                       <td className="px-6 py-4 text-slate-600">
-//                         {order.deliveryDate ? new Date(order.deliveryDate).toLocaleDateString() : 'N/A'}
-//                       </td>
-//                       <td className="px-6 py-4">
-//                         <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-bold">
-//                           {order.garments?.length || 0} items
-//                         </span>
-//                       </td>
-//                       <td className="px-6 py-4 font-bold">
-//                         {formatCurrency(totalAmount)}
-//                       </td>
-//                       <td className="px-6 py-4 font-bold text-green-600">
-//                         {formatCurrency(totalPaid)}
-//                       </td>
-//                       <td className="px-6 py-4">
-//                         <span className={`font-bold ${
-//                           balanceAmount <= 0 ? 'text-green-600' : 'text-orange-600'
-//                         }`}>
-//                           {formatCurrency(balanceAmount)}
-//                         </span>
-//                       </td>
-//                       <td className="px-6 py-4">
-//                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${paymentStatusBadge.bg} ${paymentStatusBadge.text}`}>
-//                           {paymentStatusBadge.label}
-//                         </span>
-//                         {order.paymentSummary?.paymentCount > 0 && (
-//                           <p className="text-xs text-slate-400 mt-1">
-//                             {order.paymentSummary.paymentCount} payment(s)
-//                           </p>
-//                         )}
-//                       </td>
-//                       <td className="px-6 py-4">
-//                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusBadge.bg} ${statusBadge.text}`}>
-//                           {statusBadge.label}
-//                         </span>
-//                       </td>
-//                       <td className="px-6 py-4">
-//                         <div className="flex items-center gap-2">
-//                           <button
-//                             onClick={() => handleViewOrder(order._id)}
-//                             disabled={isDeleting}
-//                             className="p-2 bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
-//                             title="View Details"
-//                           >
-//                             <Eye size={16} />
-//                           </button>
-//                           {canEdit && (
-//                             <>
-//                               <button
-//                                 onClick={() => handleEditOrder(order._id)}
-//                                 disabled={isDeleting}
-//                                 className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
-//                                 title="Edit"
-//                               >
-//                                 <Edit size={16} />
-//                               </button>
-//                               {isAdmin && (
-//                                 <button
-//                                   onClick={() => handleDeleteOrder(order._id, order.orderId)}
-//                                   disabled={isDeleting}
-//                                   className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
-//                                   title="Delete"
-//                                 >
-//                                   {isDeleting ? (
-//                                     <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-//                                   ) : (
-//                                     <Trash2 size={16} />
-//                                   )}
-//                                 </button>
-//                               )}
-//                             </>
-//                           )}
-//                         </div>
-//                       </td>
-//                     </tr>
-//                   );
-//                 })
-//               ) : (
-//                 <tr>
-//                   <td colSpan="12" className="px-6 py-12 text-center">
-//                     <div className="flex flex-col items-center">
-//                       <Calendar size={48} className="text-slate-300 mb-4" />
-//                       <p className="text-slate-500 text-lg">No orders found</p>
-//                       {canEdit && (
-//                         <button
-//                           onClick={handleNewOrder}
-//                           className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2"
-//                         >
-//                           <Plus size={18} />
-//                           Create First Order
-//                         </button>
-//                       )}
-//                     </div>
-//                   </td>
-//                 </tr>
-//               )}
-//             </tbody>
-//           </table>
-//         </div>
-
-//         {/* Pagination */}
-//         {pagination?.pages > 1 && (
-//           <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
-//             <div className="text-sm text-slate-500">
-//               Showing page {pagination.page} of {pagination.pages} (Total: {pagination.total} orders)
-//             </div>
-//             <div className="flex items-center gap-2">
-//               <button
-//                 onClick={() => handlePageChange(currentPage - 1)}
-//                 disabled={currentPage === 1}
-//                 className={`p-2 rounded-lg ${
-//                   currentPage === 1
-//                     ? "text-slate-300 cursor-not-allowed"
-//                     : "text-slate-600 hover:bg-slate-100"
-//                 }`}
-//               >
-//                 <ChevronLeft size={20} />
-//               </button>
-              
-//               {Array.from({ length: pagination.pages }, (_, i) => i + 1).map((pageNum) => {
-//                 if (
-//                   pageNum === 1 ||
-//                   pageNum === pagination.pages ||
-//                   (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-//                 ) {
-//                   return (
-//                     <button
-//                       key={pageNum}
-//                       onClick={() => handlePageChange(pageNum)}
-//                       className={`w-10 h-10 rounded-lg font-bold transition-all ${
-//                         currentPage === pageNum
-//                           ? "bg-blue-600 text-white"
-//                           : "text-slate-600 hover:bg-slate-100"
-//                       }`}
-//                     >
-//                       {pageNum}
-//                     </button>
-//                   );
-//                 } else if (
-//                   pageNum === currentPage - 2 ||
-//                   pageNum === currentPage + 2
-//                 ) {
-//                   return <span key={pageNum} className="text-slate-400">...</span>;
-//                 }
-//                 return null;
-//               })}
-              
-//               <button
-//                 onClick={() => handlePageChange(currentPage + 1)}
-//                 disabled={currentPage === pagination.pages}
-//                 className={`p-2 rounded-lg ${
-//                   currentPage === pagination.pages
-//                     ? "text-slate-300 cursor-not-allowed"
-//                     : "text-slate-600 hover:bg-slate-100"
-//                 }`}
-//               >
-//                 <ChevronRight size={20} />
-//               </button>
-//             </div>
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
-
-
-
-
-
-
-
-// import React, { useState, useEffect, useCallback, useMemo } from "react";
-// import { useDispatch, useSelector } from "react-redux";
-// import { useNavigate } from "react-router-dom";
-// import {
-//   Search,
-//   Plus,
-//   ChevronLeft,
-//   ChevronRight,
-//   Eye,
-//   Edit,
-//   Trash2,
-//   Filter,
-//   Calendar,
-//   IndianRupee,
-//   TrendingUp,
-// } from "lucide-react";
-// import {
-//   fetchOrders,
-//   deleteExistingOrder,
-//   updateOrderStatusThunk,
-//   clearOrderError,
-//   setPagination
-// } from "../../../features/order/orderSlice";  
-// import showToast from "../../../utils/toast";
-
-// export default function Orders() {
-//   const dispatch = useDispatch();
-//   const navigate = useNavigate();
-  
-//   // Debug flag
-//   const DEBUG = true;
-  
-//   // Debug logger
-//   const logDebug = (message, data) => {
-//     if (DEBUG) {
-//       console.log(`[Orders Debug] ${message}`, data || '');
-//     }
-//   };
-
-//   // Log component mount
-//   useEffect(() => {
-//     logDebug('Orders component mounted');
-//     return () => logDebug('Orders component unmounted');
-//   }, []);
-
-//   // ✅ FIXED: Correct state selectors with fallbacks
-//   const { orders, pagination, loading, error } = useSelector((state) => {
-//     // Log the actual state structure for debugging
-//     console.log("🔍 Available Redux keys:", Object.keys(state));
-    
-//     // Try different possible state paths
-//     const ordersState = state.orders || state.order || {};
-    
-//     const result = {
-//       orders: ordersState.orders || ordersState.items || [],
-//       pagination: ordersState.pagination || { page: 1, pages: 1, total: 0 },
-//       loading: ordersState.loading || false,
-//       error: ordersState.error || null
-//     };
-    
-//     logDebug('Redux state accessed', { 
-//       ordersCount: result.orders?.length,
-//       pagination: result.pagination,
-//       loading: result.loading,
-//       error: result.error
-//     });
-    
-//     return result;
-//   });
-  
-//   const { user } = useSelector((state) => {
-//     logDebug('Auth state', { role: state.auth?.user?.role });
-//     return { user: state.auth?.user };
-//   });
-  
-//   const [searchTerm, setSearchTerm] = useState("");
-//   const [statusFilter, setStatusFilter] = useState("all");
-//   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
-//   const [timeFilter, setTimeFilter] = useState("all");
-//   const [currentPage, setCurrentPage] = useState(1);
-//   const [debouncedSearch, setDebouncedSearch] = useState("");
-//   const [showFilterMenu, setShowFilterMenu] = useState(false);
-//   const [showPaymentFilterMenu, setShowPaymentFilterMenu] = useState(false);
-//   const [deleteLoading, setDeleteLoading] = useState({});
-
-//   const isAdmin = user?.role === "ADMIN";
-//   const isStoreKeeper = user?.role === "STORE_KEEPER";
-//   const canEdit = isAdmin || isStoreKeeper;
-
-//   // Get base path based on user role
-//   const basePath = useMemo(() => {
-//     if (isAdmin) return "/admin";
-//     if (isStoreKeeper) return "/storekeeper";
-//     return "/cuttingmaster";
-//   }, [isAdmin, isStoreKeeper]);
-
-//   logDebug('User permissions', { isAdmin, isStoreKeeper, canEdit, basePath });
-
-//   // Debounce search
-//   useEffect(() => {
-//     logDebug('Setting search debounce', { searchTerm });
-//     const timer = setTimeout(() => {
-//       logDebug('Debounced search updated', { debouncedSearch: searchTerm });
-//       setDebouncedSearch(searchTerm);
-//       setCurrentPage(1);
-//     }, 500);
-//     return () => {
-//       logDebug('Clearing search debounce timer');
-//       clearTimeout(timer);
-//     };
-//   }, [searchTerm]);
-
-//   // Fetch orders with filters
-//   useEffect(() => {
-//     const fetchOrdersData = async () => {
-//       const params = {
-//         page: currentPage,
-//         limit: pagination?.limit || 10,
-//         search: debouncedSearch,
-//         status: statusFilter !== "all" ? statusFilter : "",
-//         paymentStatus: paymentStatusFilter !== "all" ? paymentStatusFilter : "",
-//         timeFilter,
-//       };
-      
-//       logDebug('Fetching orders with params', params);
-      
-//       try {
-//         const result = await dispatch(fetchOrders(params)).unwrap();
-//         logDebug('Orders fetched successfully', { 
-//           count: result?.orders?.length,
-//           pagination: result?.pagination 
-//         });
-//       } catch (error) {
-//         logDebug('Error fetching orders', { error: error.message });
-//         showToast.error(error?.message || "Failed to fetch orders");
-//       }
-//     };
-
-//     fetchOrdersData();
-//   }, [dispatch, currentPage, debouncedSearch, statusFilter, paymentStatusFilter, timeFilter, pagination?.limit]);
-
-//   // Clear error on unmount
-//   useEffect(() => {
-//     return () => {
-//       dispatch(clearOrderError());
-//     };
-//   }, [dispatch]);
-
-//   const handleSearch = useCallback((e) => {
-//     const value = e.target.value;
-//     setSearchTerm(value);
-//   }, []);
-
-//   // Navigate to view order
-//   const handleViewOrder = useCallback((id) => {
-//     logDebug('View order', { id, basePath });
-//     navigate(`${basePath}/orders/${id}`);
-//   }, [navigate, basePath]);
-
-//   // Navigate to edit order
-//   const handleEditOrder = useCallback((id) => {
-//     logDebug('Edit order', { id, canEdit, basePath });
-//     if (canEdit) {
-//       navigate(`${basePath}/orders/edit/${id}`);
-//     } else {
-//       showToast.error("You don't have permission to edit orders");
-//     }
-//   }, [canEdit, navigate, basePath]);
-
-//   // Delete order
-//   const handleDeleteOrder = useCallback(async (id, orderId) => {
-//     logDebug('Delete order attempt', { id, orderId, canEdit });
-    
-//     if (!canEdit) {
-//       showToast.error("You don't have permission to delete orders");
-//       return;
-//     }
-    
-//     if (window.confirm(`Are you sure you want to delete order ${orderId}?`)) {
-//       setDeleteLoading(prev => ({ ...prev, [id]: true }));
-//       try {
-//         logDebug('Dispatching deleteExistingOrder', { id });
-//         await dispatch(deleteExistingOrder(id)).unwrap();
-//         logDebug('Order deleted successfully', { id });
-//         showToast.success("Order deleted successfully");
-//       } catch (error) {
-//         logDebug('Error deleting order', { id, error: error.message });
-//         showToast.error(error?.message || "Failed to delete order");
-//       } finally {
-//         setDeleteLoading(prev => ({ ...prev, [id]: false }));
-//       }
-//     }
-//   }, [dispatch, canEdit]);
-
 //   // ✅ NEW: Handle mark as ready to delivery
 //   const handleMarkReadyToDelivery = useCallback(async (id, orderId) => {
 //     logDebug('Mark as ready to delivery', { id, orderId, canEdit });
@@ -997,6 +287,13 @@
 //     }).format(amount);
 //   }, []);
 
+//   // ✅ NEW: Format price range (min - max)
+//   const formatPriceRange = useCallback((min, max) => {
+//     if (!min && !max) return "₹0";
+//     if (min === max) return formatCurrency(min);
+//     return `${formatCurrency(min)} - ${formatCurrency(max)}`;
+//   }, [formatCurrency]);
+
 //   // ✅ UPDATED: Status options with ready-to-delivery
 //   const statusOptions = useMemo(() => [
 //     { value: "all", label: "All Status" },
@@ -1057,7 +354,7 @@
 //   return (
 //     <div className="space-y-8 animate-in fade-in duration-500">
 //       {/* Debug Panel */}
-//       {DEBUG && process.env.NODE_ENV === 'development' && (
+//       {/* {DEBUG && process.env.NODE_ENV === 'development' && (
 //         <div className="bg-gray-900 text-green-400 p-4 rounded-3xl font-mono text-sm overflow-auto max-h-40">
 //           <div className="flex justify-between items-center mb-2">
 //             <span className="font-bold">🔍 Debug Info</span>
@@ -1078,7 +375,7 @@
 //             <div>Role: {user?.role}</div>
 //           </div>
 //         </div>
-//       )}
+//       )} */}
 
 //       {/* Header */}
 //       <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
@@ -1227,6 +524,13 @@
 //                 <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
 //                   Garments
 //                 </th>
+//                 {/* ✅ NEW: Price Range Column */}
+//                 <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
+//                   <div className="flex items-center gap-1">
+//                     <IndianRupee size={14} />
+//                     Price Range
+//                   </div>
+//                 </th>
 //                 <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
 //                   <div className="flex items-center gap-1">
 //                     <IndianRupee size={14} />
@@ -1259,7 +563,7 @@
 //             <tbody className="divide-y divide-slate-100">
 //               {loading ? (
 //                 <tr>
-//                   <td colSpan="12" className="px-6 py-12 text-center">
+//                   <td colSpan="13" className="px-6 py-12 text-center">
 //                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
 //                     <p className="mt-2 text-slate-500">Loading orders...</p>
 //                   </td>
@@ -1273,7 +577,24 @@
 //                   const customer = order.customer || {};
 //                   const isDeleting = deleteLoading[order._id];
                   
-//                   const totalAmount = order.priceSummary?.totalMax || 0;
+//                   // ✅ Calculate price range from garments
+//                   const garments = order.garments || [];
+//                   let minTotal = 0;
+//                   let maxTotal = 0;
+                  
+//                   if (garments.length > 0) {
+//                     garments.forEach(garment => {
+//                       const priceRange = garment.priceRange || { min: 0, max: 0 };
+//                       minTotal += priceRange.min || 0;
+//                       maxTotal += priceRange.max || 0;
+//                     });
+//                   } else {
+//                     // Fallback to priceSummary if no garments
+//                     minTotal = order.priceSummary?.totalMin || 0;
+//                     maxTotal = order.priceSummary?.totalMax || 0;
+//                   }
+                  
+//                   const totalAmount = order.priceSummary?.totalMax || maxTotal || 0;
 //                   const totalPaid = order.paymentSummary?.totalPaid || 0;
 //                   const balanceAmount = order.balanceAmount || (totalAmount - totalPaid);
                   
@@ -1299,8 +620,12 @@
 //                       </td>
 //                       <td className="px-6 py-4">
 //                         <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-bold">
-//                           {order.garments?.length || 0} items
+//                           {garments.length || 0} items
 //                         </span>
+//                       </td>
+//                       {/* ✅ NEW: Price Range Cell */}
+//                       <td className="px-6 py-4 font-medium text-indigo-600">
+//                         {formatPriceRange(minTotal, maxTotal)}
 //                       </td>
 //                       <td className="px-6 py-4 font-bold">
 //                         {formatCurrency(totalAmount)}
@@ -1341,7 +666,7 @@
 //                             <Eye size={16} />
 //                           </button>
                           
-//                           {/* ✅ Status Update Buttons */}
+//                           {/* Status Update Buttons */}
 //                           {canEdit && order.status === 'in-progress' && (
 //                             <button
 //                               onClick={() => handleMarkReadyToDelivery(order._id, order.orderId)}
@@ -1397,7 +722,7 @@
 //                 })
 //               ) : (
 //                 <tr>
-//                   <td colSpan="12" className="px-6 py-12 text-center">
+//                   <td colSpan="13" className="px-6 py-12 text-center">
 //                     <div className="flex flex-col items-center">
 //                       <Calendar size={48} className="text-slate-300 mb-4" />
 //                       <p className="text-slate-500 text-lg">No orders found</p>
@@ -1498,6 +823,12 @@
 
 
 
+
+
+
+
+
+
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -1513,6 +844,8 @@ import {
   Calendar,
   IndianRupee,
   TrendingUp,
+  X,
+  Menu
 } from "lucide-react";
 import {
   fetchOrders,
@@ -1543,12 +876,10 @@ export default function Orders() {
     return () => logDebug('Orders component unmounted');
   }, []);
 
-  // ✅ FIXED: Correct state selectors with fallbacks
+  // State selectors with fallbacks
   const { orders, pagination, loading, error } = useSelector((state) => {
-    // Log the actual state structure for debugging
     console.log("🔍 Available Redux keys:", Object.keys(state));
     
-    // Try different possible state paths
     const ordersState = state.orders || state.order || {};
     
     const result = {
@@ -1582,6 +913,8 @@ export default function Orders() {
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showPaymentFilterMenu, setShowPaymentFilterMenu] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState({});
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const isAdmin = user?.role === "ADMIN";
   const isStoreKeeper = user?.role === "STORE_KEEPER";
@@ -1692,7 +1025,7 @@ export default function Orders() {
     }
   }, [dispatch, canEdit]);
 
-  // ✅ NEW: Handle mark as ready to delivery
+  // Handle mark as ready to delivery
   const handleMarkReadyToDelivery = useCallback(async (id, orderId) => {
     logDebug('Mark as ready to delivery', { id, orderId, canEdit });
     
@@ -1715,7 +1048,7 @@ export default function Orders() {
     }
   }, [dispatch, canEdit]);
 
-  // ✅ NEW: Handle mark as delivered
+  // Handle mark as delivered
   const handleMarkDelivered = useCallback(async (id, orderId) => {
     logDebug('Mark as delivered', { id, orderId, canEdit });
     
@@ -1753,7 +1086,7 @@ export default function Orders() {
     }
   }, [pagination?.pages, dispatch]);
 
-  // ✅ UPDATED: Status badge generator with ready-to-delivery
+  // Status badge generator with ready-to-delivery
   const getStatusBadge = useCallback((status) => {
     const statusConfig = {
       draft: { bg: "bg-gray-100", text: "text-gray-700", label: "Draft" },
@@ -1787,14 +1120,14 @@ export default function Orders() {
     }).format(amount);
   }, []);
 
-  // ✅ NEW: Format price range (min - max)
+  // Format price range (min - max)
   const formatPriceRange = useCallback((min, max) => {
     if (!min && !max) return "₹0";
     if (min === max) return formatCurrency(min);
     return `${formatCurrency(min)} - ${formatCurrency(max)}`;
   }, [formatCurrency]);
 
-  // ✅ UPDATED: Status options with ready-to-delivery
+  // Status options with ready-to-delivery
   const statusOptions = useMemo(() => [
     { value: "all", label: "All Status" },
     { value: "draft", label: "Draft" },
@@ -1827,249 +1160,288 @@ export default function Orders() {
   // Error display
   if (error) {
     return (
-      <div className="p-8 bg-red-50 border border-red-200 rounded-3xl">
-        <h2 className="text-xl font-bold text-red-700 mb-2">Error Loading Orders</h2>
-        <p className="text-red-600">{error}</p>
-        <button
-          onClick={() => {
-            logDebug('Retry fetching orders');
-            dispatch(fetchOrders({
-              page: currentPage,
-              limit: pagination?.limit || 10,
-              search: debouncedSearch,
-              status: statusFilter !== "all" ? statusFilter : "",
-              paymentStatus: paymentStatusFilter !== "all" ? paymentStatusFilter : "",
-              timeFilter,
-            }));
-            dispatch(clearOrderError());
-          }}
-          className="mt-4 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700"
-        >
-          Retry
-        </button>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="bg-white p-6 sm:p-8 rounded-2xl sm:rounded-3xl shadow-sm max-w-md w-full">
+          <h2 className="text-xl sm:text-2xl font-bold text-red-700 mb-2">Error Loading Orders</h2>
+          <p className="text-sm sm:text-base text-red-600 mb-4">{error}</p>
+          <button
+            onClick={() => {
+              logDebug('Retry fetching orders');
+              dispatch(fetchOrders({
+                page: currentPage,
+                limit: pagination?.limit || 10,
+                search: debouncedSearch,
+                status: statusFilter !== "all" ? statusFilter : "",
+                paymentStatus: paymentStatusFilter !== "all" ? paymentStatusFilter : "",
+                timeFilter,
+              }));
+              dispatch(clearOrderError());
+            }}
+            className="w-full px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 font-bold"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Debug Panel */}
-      {/* {DEBUG && process.env.NODE_ENV === 'development' && (
-        <div className="bg-gray-900 text-green-400 p-4 rounded-3xl font-mono text-sm overflow-auto max-h-40">
-          <div className="flex justify-between items-center mb-2">
-            <span className="font-bold">🔍 Debug Info</span>
-            <button 
-              onClick={() => console.clear()} 
-              className="text-xs bg-gray-700 px-2 py-1 rounded"
+    <div className="min-h-screen bg-slate-50">
+      {/* Mobile Header */}
+      <div className="lg:hidden bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div className="flex items-center justify-between px-4 py-3">
+          <h1 className="text-xl font-black text-slate-800 tracking-tighter">Orders</h1>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowMobileFilters(!showMobileFilters)}
+              className="p-2 hover:bg-slate-100 rounded-xl transition-all"
             >
-              Clear Console
+              <Filter size={20} />
+            </button>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 hover:bg-slate-100 rounded-xl transition-all"
+            >
+              <Menu size={20} />
             </button>
           </div>
-          <div className="space-y-1">
-            <div>State: {loading ? '🔄 Loading' : '✅ Idle'}</div>
-            <div>Orders: {orders?.length || 0}</div>
-            <div>Page: {currentPage}/{pagination?.pages || 1}</div>
-            <div>Filters: "{searchTerm}" | Status:{statusFilter} | Payment:{paymentStatusFilter} | Time:{timeFilter}</div>
-            <div>Permissions: {canEdit ? '✏️ Edit' : '👀 View'}</div>
-            <div>Base Path: {basePath}</div>
-            <div>Role: {user?.role}</div>
-          </div>
         </div>
-      )} */}
-
-      {/* Header */}
-      <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-        <h1 className="text-3xl font-black text-slate-800 tracking-tighter uppercase">
-          Orders Management
-        </h1>
-        <p className="text-slate-500 font-medium">Manage and track all customer orders with payments</p>
+        
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="absolute top-full left-0 right-0 bg-white border-b border-slate-200 shadow-lg p-4 z-40">
+            <div className="space-y-2">
+              <button
+                onClick={() => {
+                  navigate(basePath);
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full text-left px-4 py-3 hover:bg-slate-100 rounded-xl font-medium"
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={() => {
+                  navigate(`${basePath}/customers`);
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full text-left px-4 py-3 hover:bg-slate-100 rounded-xl font-medium"
+              >
+                Customers
+              </button>
+              {canEdit && (
+                <button
+                  onClick={() => {
+                    handleNewOrder();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-3 bg-blue-600 text-white rounded-xl font-bold"
+                >
+                  New Order
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Search and Filter Bar */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-4 top-3.5 text-slate-400" size={20} />
-          <input
-            type="text"
-            placeholder="Search by Order ID or Customer..."
-            value={searchTerm}
-            onChange={handleSearch}
-            className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all"
-          />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        {/* Desktop Header - Hidden on Mobile */}
+        <div className="hidden lg:block bg-white p-6 lg:p-8 rounded-2xl lg:rounded-3xl shadow-sm border border-slate-100 mb-6">
+          <h1 className="text-2xl lg:text-3xl font-black text-slate-800 tracking-tighter uppercase">
+            Orders Management
+          </h1>
+          <p className="text-sm lg:text-base text-slate-500 font-medium">Manage and track all customer orders with payments</p>
         </div>
 
-        <div className="flex gap-3 w-full md:w-auto">
-          {/* Status Filter Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => {
-                setShowFilterMenu(!showFilterMenu);
-                setShowPaymentFilterMenu(false);
-              }}
-              className="px-4 py-3 bg-white border border-slate-200 rounded-xl font-medium flex items-center gap-2 hover:bg-slate-50 transition-all"
-            >
-              <Filter size={18} />
-              {statusOptions.find(s => s.value === statusFilter)?.label || "Status"}
-            </button>
+        {/* Mobile Filters Panel */}
+        {showMobileFilters && (
+          <div className="lg:hidden bg-white rounded-xl shadow-lg border border-slate-200 p-4 mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-slate-800">Filters</h3>
+              <button
+                onClick={() => setShowMobileFilters(false)}
+                className="p-1 hover:bg-slate-100 rounded-lg"
+              >
+                <X size={18} />
+              </button>
+            </div>
             
-            {showFilterMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-200 z-10">
-                {statusOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => {
-                      setStatusFilter(option.value);
-                      setShowFilterMenu(false);
-                      setCurrentPage(1);
-                    }}
-                    className={`w-full text-left px-4 py-3 hover:bg-slate-50 transition-all ${
-                      statusFilter === option.value ? "bg-blue-50 text-blue-600 font-medium" : ""
-                    }`}
-                  >
-                    {option.label}
-                  </button>
+            <div className="space-y-3">
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium"
+              >
+                {statusOptions.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
+              </select>
+              
+              <select
+                value={paymentStatusFilter}
+                onChange={(e) => {
+                  setPaymentStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium"
+              >
+                {paymentStatusOptions.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+              
+              <select
+                value={timeFilter}
+                onChange={(e) => {
+                  setTimeFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium"
+              >
+                {timeFilters.map(filter => (
+                  <option key={filter.value} value={filter.value}>{filter.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+
+        {/* Search and Filter Bar - Responsive */}
+        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-4 lg:mb-6">
+          <div className="relative w-full lg:w-96">
+            <Search className="absolute left-3 sm:left-4 top-3 sm:top-3.5 text-slate-400" size={18} />
+            <input
+              type="text"
+              placeholder="Search by Order ID or Customer..."
+              value={searchTerm}
+              onChange={handleSearch}
+              className="w-full pl-10 sm:pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm sm:text-base"
+            />
+          </div>
+
+          <div className="flex gap-3 w-full lg:w-auto">
+            {/* Desktop Filters - Hidden on Mobile */}
+            <div className="hidden lg:flex gap-3">
+              {/* Status Filter Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setShowFilterMenu(!showFilterMenu);
+                    setShowPaymentFilterMenu(false);
+                  }}
+                  className="px-4 py-3 bg-white border border-slate-200 rounded-xl font-medium flex items-center gap-2 hover:bg-slate-50 transition-all"
+                >
+                  <Filter size={18} />
+                  {statusOptions.find(s => s.value === statusFilter)?.label || "Status"}
+                </button>
+                
+                {showFilterMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-200 z-10">
+                    {statusOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setStatusFilter(option.value);
+                          setShowFilterMenu(false);
+                          setCurrentPage(1);
+                        }}
+                        className={`w-full text-left px-4 py-3 hover:bg-slate-50 transition-all ${
+                          statusFilter === option.value ? "bg-blue-50 text-blue-600 font-medium" : ""
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
+
+              {/* Payment Status Filter Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setShowPaymentFilterMenu(!showPaymentFilterMenu);
+                    setShowFilterMenu(false);
+                  }}
+                  className="px-4 py-3 bg-white border border-slate-200 rounded-xl font-medium flex items-center gap-2 hover:bg-slate-50 transition-all"
+                >
+                  <IndianRupee size={18} />
+                  {paymentStatusOptions.find(s => s.value === paymentStatusFilter)?.label || "Payment"}
+                </button>
+                
+                {showPaymentFilterMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-200 z-10">
+                    {paymentStatusOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setPaymentStatusFilter(option.value);
+                          setShowPaymentFilterMenu(false);
+                          setCurrentPage(1);
+                        }}
+                        className={`w-full text-left px-4 py-3 hover:bg-slate-50 transition-all ${
+                          paymentStatusFilter === option.value ? "bg-blue-50 text-blue-600 font-medium" : ""
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* New Order Button */}
+            {canEdit && (
+              <button
+                onClick={handleNewOrder}
+                className="w-full lg:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
+              >
+                <Plus size={20} />
+                <span className="hidden sm:inline">New Order</span>
+                <span className="sm:hidden">New</span>
+              </button>
             )}
           </div>
-
-          {/* Payment Status Filter Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => {
-                setShowPaymentFilterMenu(!showPaymentFilterMenu);
-                setShowFilterMenu(false);
-              }}
-              className="px-4 py-3 bg-white border border-slate-200 rounded-xl font-medium flex items-center gap-2 hover:bg-slate-50 transition-all"
-            >
-              <IndianRupee size={18} />
-              {paymentStatusOptions.find(s => s.value === paymentStatusFilter)?.label || "Payment"}
-            </button>
-            
-            {showPaymentFilterMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-200 z-10">
-                {paymentStatusOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => {
-                      setPaymentStatusFilter(option.value);
-                      setShowPaymentFilterMenu(false);
-                      setCurrentPage(1);
-                    }}
-                    className={`w-full text-left px-4 py-3 hover:bg-slate-50 transition-all ${
-                      paymentStatusFilter === option.value ? "bg-blue-50 text-blue-600 font-medium" : ""
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* New Order Button */}
-          {canEdit && (
-            <button
-              onClick={handleNewOrder}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-500/25 flex items-center gap-2"
-            >
-              <Plus size={20} />
-              New Order
-            </button>
-          )}
         </div>
-      </div>
 
-      {/* Time Filters */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {timeFilters.map((filter) => (
-          <button
-            key={filter.value}
-            onClick={() => {
-              setTimeFilter(filter.value);
-              setCurrentPage(1);
-            }}
-            className={`px-4 py-2 rounded-xl font-bold text-sm transition-all whitespace-nowrap ${
-              timeFilter === filter.value
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            {filter.label}
-          </button>
-        ))}
-      </div>
+        {/* Time Filters - Horizontal Scroll on Mobile */}
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-4 lg:mb-6 scrollbar-hide">
+          {timeFilters.map((filter) => (
+            <button
+              key={filter.value}
+              onClick={() => {
+                setTimeFilter(filter.value);
+                setCurrentPage(1);
+              }}
+              className={`px-3 sm:px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all whitespace-nowrap ${
+                timeFilter === filter.value
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
 
-      {/* Orders Table */}
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-                  Order ID
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-                  Customer
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-                  Phone
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-                  Order Date
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-                  Delivery
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-                  Garments
-                </th>
-                {/* ✅ NEW: Price Range Column */}
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-                  <div className="flex items-center gap-1">
-                    <IndianRupee size={14} />
-                    Price Range
-                  </div>
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-                  <div className="flex items-center gap-1">
-                    <IndianRupee size={14} />
-                    Total
-                  </div>
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-                  <div className="flex items-center gap-1">
-                    <IndianRupee size={14} />
-                    Paid
-                  </div>
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-                  <div className="flex items-center gap-1">
-                    <TrendingUp size={14} />
-                    Balance
-                  </div>
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-                  Payment Status
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-                  Order Status
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr>
-                  <td colSpan="13" className="px-6 py-12 text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
-                    <p className="mt-2 text-slate-500">Loading orders...</p>
-                  </td>
-                </tr>
-              ) : orders?.length > 0 ? (
-                orders.map((order) => {
+        {/* Orders Table - Responsive */}
+        <div className="bg-white rounded-xl lg:rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+          {/* Mobile Card View */}
+          <div className="lg:hidden">
+            {loading ? (
+              <div className="p-8 text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
+                <p className="mt-2 text-slate-500">Loading orders...</p>
+              </div>
+            ) : orders?.length > 0 ? (
+              <div className="divide-y divide-slate-100">
+                {orders.map((order) => {
                   if (!order) return null;
                   
                   const statusBadge = getStatusBadge(order.status);
@@ -2077,7 +1449,6 @@ export default function Orders() {
                   const customer = order.customer || {};
                   const isDeleting = deleteLoading[order._id];
                   
-                  // ✅ Calculate price range from garments
                   const garments = order.garments || [];
                   let minTotal = 0;
                   let maxTotal = 0;
@@ -2089,7 +1460,6 @@ export default function Orders() {
                       maxTotal += priceRange.max || 0;
                     });
                   } else {
-                    // Fallback to priceSummary if no garments
                     minTotal = order.priceSummary?.totalMin || 0;
                     maxTotal = order.priceSummary?.totalMax || 0;
                   }
@@ -2099,80 +1469,60 @@ export default function Orders() {
                   const balanceAmount = order.balanceAmount || (totalAmount - totalPaid);
                   
                   return (
-                    <tr key={order._id} className={`hover:bg-slate-50 transition-all ${isDeleting ? 'opacity-50' : ''}`}>
-                      <td className="px-6 py-4 font-mono font-bold text-blue-600">
-                        {order.orderId || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4">
+                    <div key={order._id} className={`p-4 ${isDeleting ? 'opacity-50' : ''}`}>
+                      <div className="flex items-start justify-between mb-2">
                         <div>
-                          <p className="font-medium text-slate-800">{customer.name || "N/A"}</p>
-                          <p className="text-xs text-slate-400">{customer.customerId || ""}</p>
+                          <span className="font-mono font-bold text-blue-600 text-sm">
+                            {order.orderId || 'N/A'}
+                          </span>
+                          <p className="font-medium text-slate-800 mt-1">{customer.name || "N/A"}</p>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 text-slate-600">
-                        {customer.phone || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 text-slate-600">
-                        {order.orderDate ? new Date(order.orderDate).toLocaleDateString() : 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 text-slate-600">
-                        {order.deliveryDate ? new Date(order.deliveryDate).toLocaleDateString() : 'N/A'}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-bold">
-                          {garments.length || 0} items
-                        </span>
-                      </td>
-                      {/* ✅ NEW: Price Range Cell */}
-                      <td className="px-6 py-4 font-medium text-indigo-600">
-                        {formatPriceRange(minTotal, maxTotal)}
-                      </td>
-                      <td className="px-6 py-4 font-bold">
-                        {formatCurrency(totalAmount)}
-                      </td>
-                      <td className="px-6 py-4 font-bold text-green-600">
-                        {formatCurrency(totalPaid)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`font-bold ${
-                          balanceAmount <= 0 ? 'text-green-600' : 'text-orange-600'
-                        }`}>
-                          {formatCurrency(balanceAmount)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${paymentStatusBadge.bg} ${paymentStatusBadge.text}`}>
-                          {paymentStatusBadge.label}
-                        </span>
-                        {order.paymentSummary?.paymentCount > 0 && (
-                          <p className="text-xs text-slate-400 mt-1">
-                            {order.paymentSummary.paymentCount} payment(s)
-                          </p>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusBadge.bg} ${statusBadge.text}`}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${statusBadge.bg} ${statusBadge.text}`}>
                           {statusBadge.label}
                         </span>
-                      </td>
-                      <td className="px-6 py-4">
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
+                        <div>
+                          <p className="text-slate-400">Phone</p>
+                          <p className="font-medium">{customer.phone || "N/A"}</p>
+                        </div>
+                        <div>
+                          <p className="text-slate-400">Garments</p>
+                          <p className="font-medium">{garments.length || 0} items</p>
+                        </div>
+                        <div>
+                          <p className="text-slate-400">Price Range</p>
+                          <p className="font-medium text-indigo-600">{formatPriceRange(minTotal, maxTotal)}</p>
+                        </div>
+                        <div>
+                          <p className="text-slate-400">Balance</p>
+                          <p className={`font-bold ${balanceAmount <= 0 ? 'text-green-600' : 'text-orange-600'}`}>
+                            {formatCurrency(balanceAmount)}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
+                        <div>
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${paymentStatusBadge.bg} ${paymentStatusBadge.text}`}>
+                            {paymentStatusBadge.label}
+                          </span>
+                        </div>
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleViewOrder(order._id)}
                             disabled={isDeleting}
-                            className="p-2 bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="View Details"
+                            className="p-2 bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200"
                           >
                             <Eye size={16} />
                           </button>
                           
-                          {/* Status Update Buttons */}
                           {canEdit && order.status === 'in-progress' && (
                             <button
                               onClick={() => handleMarkReadyToDelivery(order._id, order.orderId)}
                               disabled={isDeleting}
-                              className="p-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                              title="Mark as Ready to Delivery"
+                              className="p-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200"
                             >
                               <span className="text-xs font-bold">📦</span>
                             </button>
@@ -2182,8 +1532,7 @@ export default function Orders() {
                             <button
                               onClick={() => handleMarkDelivered(order._id, order.orderId)}
                               disabled={isDeleting}
-                              className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                              title="Mark as Delivered"
+                              className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200"
                             >
                               <span className="text-xs font-bold">✅</span>
                             </button>
@@ -2194,8 +1543,7 @@ export default function Orders() {
                               <button
                                 onClick={() => handleEditOrder(order._id)}
                                 disabled={isDeleting}
-                                className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                title="Edit"
+                                className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"
                               >
                                 <Edit size={16} />
                               </button>
@@ -2203,8 +1551,7 @@ export default function Orders() {
                                 <button
                                   onClick={() => handleDeleteOrder(order._id, order.orderId)}
                                   disabled={isDeleting}
-                                  className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                  title="Delete"
+                                  className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
                                 >
                                   {isDeleting ? (
                                     <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
@@ -2216,40 +1563,273 @@ export default function Orders() {
                             </>
                           )}
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan="13" className="px-6 py-12 text-center">
-                    <div className="flex flex-col items-center">
-                      <Calendar size={48} className="text-slate-300 mb-4" />
-                      <p className="text-slate-500 text-lg">No orders found</p>
-                      {canEdit && (
-                        <button
-                          onClick={handleNewOrder}
-                          className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2"
-                        >
-                          <Plus size={18} />
-                          Create First Order
-                        </button>
-                      )}
+                      </div>
                     </div>
-                  </td>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="p-8 text-center">
+                <Calendar size={40} className="text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-500 text-base">No orders found</p>
+                {canEdit && (
+                  <button
+                    onClick={handleNewOrder}
+                    className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 mx-auto"
+                  >
+                    <Plus size={18} />
+                    Create First Order
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden lg:block overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
+                    Order ID
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
+                    Customer
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
+                    Phone
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
+                    Order Date
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
+                    Delivery
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
+                    Garments
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
+                    <div className="flex items-center gap-1">
+                      <IndianRupee size={14} />
+                      Price Range
+                    </div>
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
+                    <div className="flex items-center gap-1">
+                      <IndianRupee size={14} />
+                      Total
+                    </div>
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
+                    <div className="flex items-center gap-1">
+                      <IndianRupee size={14} />
+                      Paid
+                    </div>
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
+                    <div className="flex items-center gap-1">
+                      <TrendingUp size={14} />
+                      Balance
+                    </div>
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
+                    Payment Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
+                    Order Status
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {loading ? (
+                  <tr>
+                    <td colSpan="13" className="px-6 py-12 text-center">
+                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
+                      <p className="mt-2 text-slate-500">Loading orders...</p>
+                    </td>
+                  </tr>
+                ) : orders?.length > 0 ? (
+                  orders.map((order) => {
+                    if (!order) return null;
+                    
+                    const statusBadge = getStatusBadge(order.status);
+                    const paymentStatusBadge = getPaymentStatusBadge(order.paymentSummary?.paymentStatus);
+                    const customer = order.customer || {};
+                    const isDeleting = deleteLoading[order._id];
+                    
+                    const garments = order.garments || [];
+                    let minTotal = 0;
+                    let maxTotal = 0;
+                    
+                    if (garments.length > 0) {
+                      garments.forEach(garment => {
+                        const priceRange = garment.priceRange || { min: 0, max: 0 };
+                        minTotal += priceRange.min || 0;
+                        maxTotal += priceRange.max || 0;
+                      });
+                    } else {
+                      minTotal = order.priceSummary?.totalMin || 0;
+                      maxTotal = order.priceSummary?.totalMax || 0;
+                    }
+                    
+                    const totalAmount = order.priceSummary?.totalMax || maxTotal || 0;
+                    const totalPaid = order.paymentSummary?.totalPaid || 0;
+                    const balanceAmount = order.balanceAmount || (totalAmount - totalPaid);
+                    
+                    return (
+                      <tr key={order._id} className={`hover:bg-slate-50 transition-all ${isDeleting ? 'opacity-50' : ''}`}>
+                        <td className="px-6 py-4 font-mono font-bold text-blue-600">
+                          {order.orderId || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div>
+                            <p className="font-medium text-slate-800">{customer.name || "N/A"}</p>
+                            <p className="text-xs text-slate-400">{customer.customerId || ""}</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-slate-600">
+                          {customer.phone || "N/A"}
+                        </td>
+                        <td className="px-6 py-4 text-slate-600">
+                          {order.orderDate ? new Date(order.orderDate).toLocaleDateString() : 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 text-slate-600">
+                          {order.deliveryDate ? new Date(order.deliveryDate).toLocaleDateString() : 'N/A'}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-bold">
+                            {garments.length || 0} items
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 font-medium text-indigo-600">
+                          {formatPriceRange(minTotal, maxTotal)}
+                        </td>
+                        <td className="px-6 py-4 font-bold">
+                          {formatCurrency(totalAmount)}
+                        </td>
+                        <td className="px-6 py-4 font-bold text-green-600">
+                          {formatCurrency(totalPaid)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`font-bold ${
+                            balanceAmount <= 0 ? 'text-green-600' : 'text-orange-600'
+                          }`}>
+                            {formatCurrency(balanceAmount)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${paymentStatusBadge.bg} ${paymentStatusBadge.text}`}>
+                            {paymentStatusBadge.label}
+                          </span>
+                          {order.paymentSummary?.paymentCount > 0 && (
+                            <p className="text-xs text-slate-400 mt-1">
+                              {order.paymentSummary.paymentCount} payment(s)
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusBadge.bg} ${statusBadge.text}`}>
+                            {statusBadge.label}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleViewOrder(order._id)}
+                              disabled={isDeleting}
+                              className="p-2 bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="View Details"
+                            >
+                              <Eye size={16} />
+                            </button>
+                            
+                            {canEdit && order.status === 'in-progress' && (
+                              <button
+                                onClick={() => handleMarkReadyToDelivery(order._id, order.orderId)}
+                                disabled={isDeleting}
+                                className="p-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Mark as Ready to Delivery"
+                              >
+                                <span className="text-xs font-bold">📦</span>
+                              </button>
+                            )}
+                            
+                            {canEdit && order.status === 'ready-to-delivery' && (
+                              <button
+                                onClick={() => handleMarkDelivered(order._id, order.orderId)}
+                                disabled={isDeleting}
+                                className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Mark as Delivered"
+                              >
+                                <span className="text-xs font-bold">✅</span>
+                              </button>
+                            )}
+                            
+                            {canEdit && (
+                              <>
+                                <button
+                                  onClick={() => handleEditOrder(order._id)}
+                                  disabled={isDeleting}
+                                  className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  title="Edit"
+                                >
+                                  <Edit size={16} />
+                                </button>
+                                {isAdmin && (
+                                  <button
+                                    onClick={() => handleDeleteOrder(order._id, order.orderId)}
+                                    disabled={isDeleting}
+                                    className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    title="Delete"
+                                  >
+                                    {isDeleting ? (
+                                      <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                      <Trash2 size={16} />
+                                    )}
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="13" className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center">
+                        <Calendar size={48} className="text-slate-300 mb-4" />
+                        <p className="text-slate-500 text-lg">No orders found</p>
+                        {canEdit && (
+                          <button
+                            onClick={handleNewOrder}
+                            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2"
+                          >
+                            <Plus size={18} />
+                            Create First Order
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination - Responsive */}
         {pagination?.pages > 1 && (
-          <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between">
-            <div className="text-sm text-slate-500">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 lg:mt-6 bg-white p-4 rounded-xl lg:rounded-2xl shadow-sm border border-slate-100">
+            <div className="text-xs sm:text-sm text-slate-500 order-2 sm:order-1">
               Showing page {pagination.page} of {pagination.pages} (Total: {pagination.total} orders)
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 order-1 sm:order-2">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
@@ -2259,36 +1839,42 @@ export default function Orders() {
                     : "text-slate-600 hover:bg-slate-100"
                 }`}
               >
-                <ChevronLeft size={20} />
+                <ChevronLeft size={18} />
               </button>
               
-              {Array.from({ length: pagination.pages }, (_, i) => i + 1).map((pageNum) => {
-                if (
-                  pageNum === 1 ||
-                  pageNum === pagination.pages ||
-                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-                ) {
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => handlePageChange(pageNum)}
-                      className={`w-10 h-10 rounded-lg font-bold transition-all ${
-                        currentPage === pageNum
-                          ? "bg-blue-600 text-white"
-                          : "text-slate-600 hover:bg-slate-100"
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                } else if (
-                  pageNum === currentPage - 2 ||
-                  pageNum === currentPage + 2
-                ) {
-                  return <span key={pageNum} className="text-slate-400">...</span>;
-                }
-                return null;
-              })}
+              <div className="hidden sm:flex items-center gap-2">
+                {Array.from({ length: pagination.pages }, (_, i) => i + 1).map((pageNum) => {
+                  if (
+                    pageNum === 1 ||
+                    pageNum === pagination.pages ||
+                    (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                  ) {
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg font-bold transition-all text-sm ${
+                          currentPage === pageNum
+                            ? "bg-blue-600 text-white"
+                            : "text-slate-600 hover:bg-slate-100"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  } else if (
+                    pageNum === currentPage - 2 ||
+                    pageNum === currentPage + 2
+                  ) {
+                    return <span key={pageNum} className="text-slate-400">...</span>;
+                  }
+                  return null;
+                })}
+              </div>
+              
+              <span className="sm:hidden text-sm font-bold text-blue-600">
+                {currentPage}/{pagination.pages}
+              </span>
               
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
@@ -2299,7 +1885,7 @@ export default function Orders() {
                     : "text-slate-600 hover:bg-slate-100"
                 }`}
               >
-                <ChevronRight size={20} />
+                <ChevronRight size={18} />
               </button>
             </div>
           </div>
