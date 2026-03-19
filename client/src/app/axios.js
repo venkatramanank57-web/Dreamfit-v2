@@ -7,6 +7,10 @@ const API = axios.create({
     "Content-Type": "application/json",
   },
 });
+//https://dreamfit-v2.onrender.com
+//http://localhost:5000
+
+
 
 // Request interceptor to add token to every request
 API.interceptors.request.use(
