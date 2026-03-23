@@ -673,8 +673,84 @@ export default function GarmentForm({
   //   [allDeliveryDates],
   // ); // 🔥 Changed dependency
 
+// const renderDayContents = useCallback(
+//   (day, date) => {
+//     const y = date.getFullYear();
+//     const m = String(date.getMonth() + 1).padStart(2, "0");
+//     const d = String(date.getDate()).padStart(2, "0");
+//     const dateStr = `${y}-${m}-${d}`;
+
+//     const deliveryInfo = allDeliveryDates?.find((item) => item._id === dateStr);
+//     const count = deliveryInfo?.count || 0;
+//     const hasOrders = count > 0;
+
+//     return (
+//       /* Main Wrapper: Fixed size & overflow visible is MUST */
+//       <div style={{ 
+//         position: 'relative', 
+//         width: '32px', 
+//         height: '32px', 
+//         display: 'flex', 
+//         alignItems: 'center', 
+//         justifyContent: 'center',
+//         margin: '0 auto'
+//       }}>
+        
+//         {/* 1. Date Number */}
+//         <span style={{ fontSize: '14px', fontWeight: '500' }}>{day}</span>
+
+//         {/* 2. 🔴 Top Corner Red Dot */}
+//         {hasOrders && (
+//           <div style={{
+//             position: 'absolute',
+//             top: '-2px',
+//             right: '-2px',
+//             width: '8px',
+//             height: '8px',
+//             backgroundColor: '#ef4444',
+//             borderRadius: '50%',
+//             border: '1.5px solid white',
+//             boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+//           }} />
+//         )}
+
+//         {/* 3. 🟢 Bottom Center Green Badge */}
+//         {hasOrders && (
+//           <div style={{
+//             position: 'absolute',
+//             bottom: '-6px', // Push it slightly outside the box
+//             left: '50%',
+//             transform: 'translateX(-50%)',
+//             backgroundColor: '#22c55e',
+//             color: 'white',
+//             borderRadius: '10px',
+//             minWidth: '16px',
+//             height: '14px',
+//             fontSize: '9px',
+//             display: 'flex',
+//             alignItems: 'center',
+//             justifyContent: 'center',
+//             padding: '0 4px',
+//             border: '1px solid white',
+//             boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+//             zIndex: 10
+//           }}>
+//             {count > 9 ? "9+" : count}
+//           </div>
+//         )}
+//       </div>
+//     );
+//   },
+//   [allDeliveryDates]
+// );
+
 const renderDayContents = useCallback(
   (day, date) => {
+    // 🔥 Past Date Check (Today-ku munnadi ulla dates)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const isPast = date < today;
+
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, "0");
     const d = String(date.getDate()).padStart(2, "0");
@@ -682,7 +758,9 @@ const renderDayContents = useCallback(
 
     const deliveryInfo = allDeliveryDates?.find((item) => item._id === dateStr);
     const count = deliveryInfo?.count || 0;
-    const hasOrders = count > 0;
+    
+    // UI condition: Orders irukanum and adhu past date-ah irukakoodathu
+    const hasOrders = count > 0 && !isPast;
 
     return (
       /* Main Wrapper: Fixed size & overflow visible is MUST */
@@ -693,11 +771,18 @@ const renderDayContents = useCallback(
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center',
-        margin: '0 auto'
+        margin: '0 auto',
+        opacity: isPast ? 0.4 : 1 // Past dates-ai mattum fade pannum
       }}>
         
         {/* 1. Date Number */}
-        <span style={{ fontSize: '14px', fontWeight: '500' }}>{day}</span>
+        <span style={{ 
+          fontSize: '14px', 
+          fontWeight: isPast ? '400' : '500',
+          color: isPast ? '#94a3b8' : 'inherit' 
+        }}>
+          {day}
+        </span>
 
         {/* 2. 🔴 Top Corner Red Dot */}
         {hasOrders && (

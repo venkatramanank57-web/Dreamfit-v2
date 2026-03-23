@@ -1653,7 +1653,7 @@ export default function AddPaymentModal({
               )}
             </div>
             <div>
-              <label className="block text-xs font-black uppercase text-slate-500 mb-2">
+              {/* <label className="block text-xs font-black uppercase text-slate-500 mb-2">
                 Time <span className="text-red-500">*</span>
               </label>
               <div className="relative">
@@ -1668,7 +1668,7 @@ export default function AddPaymentModal({
                   }`}
                   required
                 />
-              </div>
+              </div> */}
               {errors.paymentTime && (
                 <p className="text-xs text-red-500 mt-1">{errors.paymentTime}</p>
               )}

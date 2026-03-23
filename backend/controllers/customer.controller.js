@@ -1076,6 +1076,8 @@ import Payment from "../models/Payment.js";
 import Order from "../models/Order.js";
 import mongoose from "mongoose";
 import CustomerMeasurementTemplate from "../models/CustomerMeasurementTemplate.js";
+import * as XLSX from "xlsx";
+
 
 // ===== HELPER FUNCTION TO GET CUSTOMER PAYMENT SUMMARY =====
 const getCustomerPaymentSummary = async (customerId) => {
@@ -2140,6 +2142,379 @@ export const useTemplate = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || "Failed to use template"
+    });
+  }
+};
+
+
+
+// // 📥 1. IMPORT CUSTOMERS (Excel -> Database)
+// export const importCustomers = async (req, res) => {
+//   try {
+//     // Multer uses req.file for single uploads
+//     if (!req.file) {
+//       return res.status(400).json({ message: "Please upload an Excel file" });
+//     }
+
+//     // Read workbook from buffer (Memory Storage)
+//     const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+//     const sheetName = workbook.SheetNames[0];
+//     const sheet = workbook.Sheets[sheetName];
+//     const data = XLSX.utils.sheet_to_json(sheet);
+
+//     if (data.length === 0) {
+//       return res.status(400).json({ message: "Excel file is empty or formatted incorrectly" });
+//     }
+
+//     const importedCustomers = [];
+//     const errors = [];
+
+//     // Process each row
+//     for (const row of data) {
+//       try {
+//         // Validation: firstName and phone are required in Schema
+//         if (!row.firstName || !row.phone) {
+//           errors.push(`Row skipped: Missing Name or Phone.`);
+//           continue;
+//         }
+
+//         // Duplicate check
+//         const existingCustomer = await Customer.findOne({ phone: String(row.phone) });
+//         if (existingCustomer) {
+//           errors.push(`Customer ${row.firstName} (${row.phone}) already exists.`);
+//           continue;
+//         }
+
+//         const newCustomer = new Customer({
+//           salutation: row.salutation || "Mr.",
+//           firstName: row.firstName,
+//           lastName: row.lastName || "",
+//           phone: String(row.phone),
+//           whatsappNumber: row.whatsappNumber ? String(row.whatsappNumber) : String(row.phone),
+//           email: row.email || "",
+//           addressLine1: row.addressLine1 || "N/A",
+//           addressLine2: row.addressLine2 || "",
+//           city: row.city || "",
+//           state: row.state || "",
+//           pincode: String(row.pincode || ""),
+//           notes: row.notes || "Imported via Excel",
+//         });
+
+//         // Save triggers pre-save hook for customerId and fullName
+//         await newCustomer.save();
+//         importedCustomers.push(newCustomer);
+//       } catch (err) {
+//         errors.push(`Error importing ${row.firstName || 'Unknown'}: ${err.message}`);
+//       }
+//     }
+
+//     res.status(200).json({
+//       success: true,
+//       message: `${importedCustomers.length} Customers imported successfully.`,
+//       errorCount: errors.length,
+//       errors: errors.length > 0 ? errors : null
+//     });
+
+//   } catch (error) {
+//     console.error("❌ Import Error:", error);
+//     res.status(500).json({ message: "Internal Server Error during import" });
+//   }
+// };
+
+// // 📤 2. EXPORT CUSTOMERS (Database -> Excel)
+// export const exportCustomers = async (req, res) => {
+//   try {
+//     // Lean helps to get plain JS objects (faster)
+//     const customers = await Customer.find().lean();
+
+//     if (!customers || customers.length === 0) {
+//       return res.status(404).json({ message: "No customers found to export" });
+//     }
+
+//     const exportData = customers.map(cust => ({
+//       "Customer ID": cust.customerId,
+//       "Name": cust.name,
+//       "Salutation": cust.salutation,
+//       "First Name": cust.firstName,
+//       "Last Name": cust.lastName,
+//       "Phone": cust.phone,
+//       "WhatsApp": cust.whatsappNumber,
+//       "Email": cust.email,
+//       "Address": cust.address,
+//       "City": cust.city,
+//       "State": cust.state,
+//       "Pincode": cust.pincode,
+//       "Total Orders": cust.totalOrders,
+//       "Total Spent": cust.totalSpent,
+//       "Created At": new Date(cust.createdAt).toLocaleDateString('en-IN')
+//     }));
+
+//     const worksheet = XLSX.utils.json_to_sheet(exportData);
+//     const workbook = XLSX.utils.book_new();
+//     XLSX.utils.book_append_sheet(workbook, worksheet, "Customers");
+
+//     const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+
+//     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+//     res.setHeader("Content-Disposition", "attachment; filename=Customers_Export.xlsx");
+    
+//     return res.status(200).send(buffer);
+
+//   } catch (error) {
+//     console.error("❌ Export Error:", error);
+//     res.status(500).json({ message: "Internal Server Error during export" });
+//   }
+// };
+
+
+
+// ============================================
+// 📥 IMPORT CUSTOMERS (Excel -> Database)
+// ============================================
+export const importCustomers = async (req, res) => {
+  try {
+    // Multer uses req.file for single uploads
+    if (!req.file) {
+      return res.status(400).json({ message: "Please upload an Excel file" });
+    }
+
+    // Read workbook from buffer (Memory Storage)
+    const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const data = XLSX.utils.sheet_to_json(sheet);
+
+    if (data.length === 0) {
+      return res.status(400).json({ message: "Excel file is empty or formatted incorrectly" });
+    }
+
+    const importedCustomers = [];
+    const errors = [];
+
+    // Process each row
+    for (const row of data) {
+      try {
+        // Support different column name formats
+        const firstName = row['First Name'] || row['firstName'] || row['Name']?.split(' ')[0];
+        const lastName = row['Last Name'] || row['lastName'] || '';
+        const phone = String(row['Phone'] || row['phone'] || '').replace(/\D/g, '').slice(0, 10);
+        const whatsapp = row['WhatsApp'] || row['whatsappNumber'] || row['whatsapp'] || phone;
+        const email = row['Email'] || row['email'] || '';
+        const addressLine1 = row['Address Line 1'] || row['addressLine1'] || row['Address'] || 'N/A';
+        const addressLine2 = row['Address Line 2'] || row['addressLine2'] || '';
+        const city = row['City'] || row['city'] || '';
+        const state = row['State'] || row['state'] || '';
+        const pincode = String(row['Pincode'] || row['pincode'] || row['zip'] || '').replace(/\D/g, '').slice(0, 6);
+        const salutation = row['Salutation'] || row['salutation'] || 'Mr.';
+        
+        // Validation: firstName and phone are required
+        if (!firstName || !phone) {
+          errors.push(`Row skipped: Missing Name or Phone.`);
+          continue;
+        }
+
+        if (phone.length !== 10) {
+          errors.push(`Row skipped: Invalid phone number ${phone} (must be 10 digits).`);
+          continue;
+        }
+
+        // Duplicate check
+        const existingCustomer = await Customer.findOne({ phone: phone });
+        if (existingCustomer) {
+          errors.push(`Customer ${firstName} (${phone}) already exists.`);
+          continue;
+        }
+
+        const newCustomer = new Customer({
+          salutation: salutation,
+          firstName: firstName,
+          lastName: lastName || "",
+          phone: phone,
+          whatsappNumber: whatsapp,
+          email: email || "",
+          addressLine1: addressLine1,
+          addressLine2: addressLine2 || "",
+          city: city || "",
+          state: state || "",
+          pincode: pincode,
+          notes: row['Notes'] || row['notes'] || "Imported via Excel",
+          totalOrders: 0,
+          totalSpent: 0
+        });
+
+        // Save triggers pre-save hook for customerId and fullName
+        await newCustomer.save();
+        importedCustomers.push(newCustomer);
+        
+      } catch (err) {
+        console.error(`Error importing row:`, err);
+        errors.push(`Error importing ${row['First Name'] || row['firstName'] || 'Unknown'}: ${err.message}`);
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `${importedCustomers.length} Customers imported successfully.`,
+      errorCount: errors.length,
+      errors: errors.length > 0 ? errors : null,
+      imported: importedCustomers.map(c => ({
+        id: c.customerId,
+        name: c.name,
+        phone: c.phone
+      }))
+    });
+
+  } catch (error) {
+    console.error("❌ Import Error:", error);
+    res.status(500).json({ message: "Internal Server Error during import" });
+  }
+};
+
+// ============================================
+// 📤 EXPORT CUSTOMERS (Database -> Excel)
+// ============================================
+export const exportCustomers = async (req, res) => {
+  try {
+    // Get all customers
+    const customers = await Customer.find().lean();
+
+    if (!customers || customers.length === 0) {
+      return res.status(404).json({ message: "No customers found to export" });
+    }
+
+    // Get all orders for these customers to calculate real totals
+    const customerIds = customers.map(c => c._id);
+    const orders = await Order.find({ 
+      customer: { $in: customerIds },
+      isActive: true 
+    }).lean();
+
+    // Create a map of customer orders
+    const orderMap = {};
+    orders.forEach(order => {
+      const customerId = order.customer.toString();
+      if (!orderMap[customerId]) {
+        orderMap[customerId] = {
+          count: 0,
+          totalSpent: 0
+        };
+      }
+      orderMap[customerId].count++;
+      orderMap[customerId].totalSpent += (order.priceSummary?.totalMax || order.totalAmount || 0);
+    });
+
+    // Get payments for total paid amount
+    const payments = await Payment.find({ 
+      customer: { $in: customerIds },
+      isDeleted: false 
+    }).lean();
+
+    // Create payment map
+    const paymentMap = {};
+    payments.forEach(payment => {
+      const customerId = payment.customer.toString();
+      if (!paymentMap[customerId]) {
+        paymentMap[customerId] = 0;
+      }
+      paymentMap[customerId] += payment.amount;
+    });
+
+    const exportData = customers.map(cust => {
+      const customerId = cust._id.toString();
+      const orderStats = orderMap[customerId] || { count: 0, totalSpent: 0 };
+      const totalPaid = paymentMap[customerId] || 0;
+      
+      return {
+        "Customer ID": cust.customerId || "",
+        "Name": cust.name || `${cust.salutation || ''} ${cust.firstName || ''} ${cust.lastName || ''}`.trim(),
+        "Salutation": cust.salutation || "",
+        "First Name": cust.firstName || "",
+        "Last Name": cust.lastName || "",
+        "Phone": cust.phone || "",
+        "WhatsApp": cust.whatsappNumber || "",
+        "Email": cust.email || "",
+        "Address": cust.address || "",
+        "City": cust.city || "",
+        "State": cust.state || "",
+        "Pincode": cust.pincode || "",
+        "Total Orders": orderStats.count,
+        "Total Spent (₹)": orderStats.totalSpent,
+        "Total Paid (₹)": totalPaid,
+        "Created At": cust.createdAt ? new Date(cust.createdAt).toLocaleDateString('en-IN') : ""
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Customers");
+
+    // Auto-size columns
+    const colWidths = Object.keys(exportData[0] || {}).map(() => ({ wch: 15 }));
+    worksheet['!cols'] = colWidths;
+
+    const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", `attachment; filename=Customers_${new Date().toISOString().split('T')[0]}.xlsx`);
+    res.setHeader("Content-Length", buffer.length);
+    
+    return res.status(200).send(buffer);
+
+  } catch (error) {
+    console.error("❌ Export Error:", error);
+    res.status(500).json({ message: "Internal Server Error during export" });
+  }
+};
+
+
+// ============================================
+// 🔄 RECALCULATE ALL CUSTOMER TOTALS
+// ============================================
+export const recalculateCustomerTotals = async (req, res) => {
+  try {
+    console.log('🔄 Recalculating all customer totals...');
+    
+    const customers = await Customer.find({ isActive: true });
+    let updated = 0;
+    let failed = 0;
+    
+    for (const customer of customers) {
+      try {
+        // Get all orders for this customer
+        const orders = await Order.find({ 
+          customer: customer._id,
+          isActive: true 
+        });
+        
+        const totalOrders = orders.length;
+        const totalSpent = orders.reduce((sum, order) => sum + (order.priceSummary?.totalMax || order.totalAmount || 0), 0);
+        
+        // Update customer totals
+        await Customer.findByIdAndUpdate(customer._id, {
+          totalOrders,
+          totalSpent
+        });
+        
+        updated++;
+        console.log(`✅ Updated ${customer.customerId}: ${totalOrders} orders, ₹${totalSpent}`);
+        
+      } catch (err) {
+        failed++;
+        console.error(`❌ Failed to update ${customer.customerId}:`, err.message);
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: `Recalculated totals for ${updated} customers`,
+      data: { updated, failed, total: customers.length }
+    });
+    
+  } catch (error) {
+    console.error('Recalculate totals error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
     });
   }
 };

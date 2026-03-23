@@ -4711,16 +4711,96 @@ export default function NewOrder() {
   // }, [deliveryDates]);
 
  // 🔥 RENDER DAY CONTENTS - EXACT UI MATCH
- const renderDayContents = useCallback((day, date) => {
+//  const renderDayContents = useCallback((day, date) => {
+//   const year = date.getFullYear();
+//   const month = String(date.getMonth() + 1).padStart(2, '0');
+//   const dayOfMonth = String(date.getDate()).padStart(2, '0');
+//   const localDateStr = `${year}-${month}-${dayOfMonth}`;
+  
+//   // ✅ Matching your NewOrder state variables
+//   const deliveryInfo = deliveryDates?.find(item => item._id === localDateStr);
+//   const count = deliveryInfo?.count || 0;
+//   const hasDeliveries = count > 0;
+  
+//   return (
+//     /* Main Wrapper: Fixed size for centering */
+//     <div style={{ 
+//       position: 'relative', 
+//       width: '32px', 
+//       height: '32px', 
+//       display: 'flex', 
+//       alignItems: 'center', 
+//       justifyContent: 'center',
+//       margin: '0 auto',
+//       overflow: 'visible' 
+//     }}>
+      
+//       {/* 1. Date Number */}
+//       <span style={{ fontSize: '14px', fontWeight: '600', zIndex: 5 }}>
+//         {day}
+//       </span>
+
+//       {/* 2. 🔴 Top Right Corner - Small Red Dot */}
+//       {hasDeliveries && (
+//         <div style={{
+//           position: 'absolute',
+//           top: '-2px',
+//           right: '-2px',
+//           width: '9px',
+//           height: '9px',
+//           backgroundColor: '#ef4444',
+//           borderRadius: '50%',
+//           border: '1.5px solid white',
+//           boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+//           zIndex: 10
+//         }} />
+//       )}
+
+//       {/* 3. 🟢 Bottom Center - Green Badge with Count */}
+//       {hasDeliveries && (
+//         <div style={{
+//           position: 'absolute',
+//           bottom: '-6px', 
+//           left: '50%',
+//           transform: 'translateX(-50%)',
+//           backgroundColor: '#22c55e',
+//           color: 'white',
+//           borderRadius: '10px',
+//           minWidth: '18px',
+//           height: '15px',
+//           fontSize: '9px',
+//           fontWeight: 'bold',
+//           display: 'flex',
+//           alignItems: 'center',
+//           justifyContent: 'center',
+//           padding: '0 4px',
+//           border: '1px solid white',
+//           boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+//           zIndex: 15
+//         }}>
+//           {count > 9 ? "9+" : count}
+//         </div>
+//       )}
+//     </div>
+//   );
+// }, [deliveryDates]);
+
+const renderDayContents = useCallback((day, date) => {
+  // 🔥 Logic to check if the date is in the past
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const isPast = date < today;
+
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const dayOfMonth = String(date.getDate()).padStart(2, '0');
   const localDateStr = `${year}-${month}-${dayOfMonth}`;
   
-  // ✅ Matching your NewOrder state variables
   const deliveryInfo = deliveryDates?.find(item => item._id === localDateStr);
   const count = deliveryInfo?.count || 0;
-  const hasDeliveries = count > 0;
+  
+  // Logic: Orders irukanum and adhu past date-ah irukakoodathu
+  const hasDeliveries = count > 0 && !isPast;
   
   return (
     /* Main Wrapper: Fixed size for centering */
@@ -4732,11 +4812,17 @@ export default function NewOrder() {
       alignItems: 'center', 
       justifyContent: 'center',
       margin: '0 auto',
-      overflow: 'visible' 
+      overflow: 'visible',
+      opacity: isPast ? 0.4 : 1 // Past dates-ai visual-ah fade pannum
     }}>
       
       {/* 1. Date Number */}
-      <span style={{ fontSize: '14px', fontWeight: '600', zIndex: 5 }}>
+      <span style={{ 
+        fontSize: '14px', 
+        fontWeight: '600', 
+        zIndex: 5,
+        color: isPast ? '#94a3b8' : 'inherit' // Past dates-ku gray color
+      }}>
         {day}
       </span>
 

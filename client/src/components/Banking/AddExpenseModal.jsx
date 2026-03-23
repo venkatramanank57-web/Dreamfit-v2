@@ -27,7 +27,7 @@ const EXPENSE_CATEGORIES = [
   { value: 'material-purchase', label: 'Material Purchase', icon: <ShoppingBag size={24} />, color: 'purple' },
   { value: 'rent', label: 'Rent', icon: <Home size={24} />, color: 'indigo' },
   { value: 'maintenance', label: 'Maintenance', icon: <Wrench size={24} />, color: 'orange' }, // ✅ Fixed here
-  { value: 'other-expense', label: 'Other Expense', icon: <Plus size={24} />, color: 'gray' }
+  // { value: 'other-expense', label: 'Other Expense', icon: <Plus size={24} />, color: 'gray' }
 ];
 
 const PAYMENT_METHODS = [
