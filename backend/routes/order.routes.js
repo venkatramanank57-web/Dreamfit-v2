@@ -303,7 +303,8 @@ import {
   updateOrderStatus,
   deleteOrder,
   getOrderDates,
-  
+    getDeliveryDatesForCalendar,
+  getSimpleDeliveryDates,
   // Customer & Payment related
   getOrdersByCustomer,
   addPaymentToOrder,
@@ -415,6 +416,19 @@ router.get("/customer/:customerId", authorize("ADMIN", "STORE_KEEPER", "CUTTING_
 // ============================================
 // ✅ DELIVERY CALENDAR ROUTES
 // ============================================
+
+
+
+// ============================================
+// ✅ SPECIFIC ROUTES FIRST (before :id)
+// ============================================
+
+// 📅 Get delivery dates for calendar
+router.get('/delivery-dates', getSimpleDeliveryDates);  // 🔥 For frontend calendar
+
+// Or use the detailed version
+router.get('/delivery-calendar', getDeliveryDatesForCalendar);
+
 
 /**
  * @route   GET /api/orders/order-dates

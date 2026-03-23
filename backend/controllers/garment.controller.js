@@ -2894,54 +2894,124 @@ export const deleteGarmentImage = async (req, res) => {
 // ============================================
 // Get delivery dates for customer orders
 // ============================================
-export const getCustomerOrderDates = async (req, res) => {
-  console.log("\n📅 ===== GET CUSTOMER DELIVERY DATES =====");
+// export const getCustomerOrderDates = async (req, res) => {
+//   console.log("\n📅 ===== GET CUSTOMER DELIVERY DATES =====");
 
+//   try {
+//     const { customerId } = req.params;
+//     const { month, year } = req.query;
+
+//     if (!customerId || !month || !year) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "customerId, month and year are required",
+//       });
+//     }
+
+//     const monthNum = parseInt(month);
+//     const yearNum = parseInt(year);
+
+//     // Start & end of month
+//     const startDate = new Date(yearNum, monthNum - 1, 1);
+//     const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59);
+
+//     console.log(
+//       `📅 Customer: ${customerId}, Range: ${startDate.toISOString()} → ${endDate.toISOString()}`
+//     );
+
+//     // 🔥 Aggregation query
+//     const result = await Garment.aggregate([
+//       {
+//         $match: {
+//           estimatedDelivery: {
+//             $gte: startDate,
+//             $lte: endDate,
+//           },
+//           isActive: true,
+//         },
+//       },
+//       {
+//         $lookup: {
+//           from: "orders",
+//           localField: "order",
+//           foreignField: "_id",
+//           as: "order",
+//         },
+//       },
+//       { $unwind: "$order" },
+//       {
+//         $match: {
+//           "order.customer": new mongoose.Types.ObjectId(customerId),
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: {
+//             $dateToString: {
+//               format: "%Y-%m-%d",
+//               date: "$estimatedDelivery",
+//             },
+//           },
+//         },
+//       },
+//       { $sort: { _id: 1 } },
+//     ]);
+
+//     const dates = result.map((d) => d._id);
+
+//     console.log(`✅ Found ${dates.length} delivery dates`, dates);
+
+//     res.json({
+//       success: true,
+//       dates,
+//       customerId,
+//       month: monthNum,
+//       year: yearNum,
+//       count: dates.length,
+//     });
+
+//   } catch (error) {
+//     console.error("❌ Error fetching delivery dates:", error);
+
+//     res.status(500).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
+
+
+
+
+export const getCustomerOrderDates = async (req, res) => {
   try {
-    const { customerId } = req.params;
     const { month, year } = req.query;
 
-    if (!customerId || !month || !year) {
+    if (!month || !year) {
       return res.status(400).json({
         success: false,
-        message: "customerId, month and year are required",
+        message: "month and year are required",
       });
     }
 
     const monthNum = parseInt(month);
     const yearNum = parseInt(year);
 
-    // Start & end of month
     const startDate = new Date(yearNum, monthNum - 1, 1);
-    const endDate = new Date(yearNum, monthNum, 0, 23, 59, 59);
+    const endDate = new Date(yearNum, monthNum, 0);
+    endDate.setHours(23, 59, 59, 999);
 
-    console.log(
-      `📅 Customer: ${customerId}, Range: ${startDate.toISOString()} → ${endDate.toISOString()}`
-    );
-
-    // 🔥 Aggregation query
-    const result = await Garment.aggregate([
+    // 🔥 ONLY ALL DELIVERY DATES (all customers)
+    const allDatesResult = await Garment.aggregate([
       {
         $match: {
           estimatedDelivery: {
+            $exists: true,
+            $ne: null,
             $gte: startDate,
             $lte: endDate,
           },
           isActive: true,
-        },
-      },
-      {
-        $lookup: {
-          from: "orders",
-          localField: "order",
-          foreignField: "_id",
-          as: "order",
-        },
-      },
-      { $unwind: "$order" },
-      {
-        $match: {
-          "order.customer": new mongoose.Types.ObjectId(customerId),
         },
       },
       {
@@ -2950,29 +3020,21 @@ export const getCustomerOrderDates = async (req, res) => {
             $dateToString: {
               format: "%Y-%m-%d",
               date: "$estimatedDelivery",
+              timezone: "Asia/Kolkata",
             },
           },
+          count: { $sum: 1 },
         },
       },
       { $sort: { _id: 1 } },
     ]);
 
-    const dates = result.map((d) => d._id);
-
-    console.log(`✅ Found ${dates.length} delivery dates`, dates);
-
     res.json({
       success: true,
-      dates,
-      customerId,
-      month: monthNum,
-      year: yearNum,
-      count: dates.length,
+      allDates: allDatesResult, // 🔥 All busy dates with counts
     });
 
   } catch (error) {
-    console.error("❌ Error fetching delivery dates:", error);
-
     res.status(500).json({
       success: false,
       message: error.message,
@@ -2980,3 +3042,72 @@ export const getCustomerOrderDates = async (req, res) => {
   }
 };
 
+
+
+
+
+
+
+
+// ============================================
+// 📅 Get all delivery dates for calendar
+// ============================================
+export const getDeliveryDates = async (req, res) => {
+  try {
+    const { month, year } = req.query;
+
+    if (!month || !year) {
+      return res.status(400).json({
+        success: false,
+        message: "Month and year are required"
+      });
+    }
+
+    const monthNum = parseInt(month);
+    const yearNum = parseInt(year);
+
+    const startDate = new Date(yearNum, monthNum - 1, 1);
+    const endDate = new Date(yearNum, monthNum, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    // Get all delivery dates with counts
+    const allDatesResult = await Garment.aggregate([
+      {
+        $match: {
+          estimatedDelivery: {
+            $exists: true,
+            $ne: null,
+            $gte: startDate,
+            $lte: endDate,
+          },
+          isActive: true,
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$estimatedDelivery",
+              timezone: "Asia/Kolkata",
+            },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    res.json({
+      success: true,
+      allDates: allDatesResult,
+    });
+
+  } catch (error) {
+    console.error('Error in getDeliveryDates:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

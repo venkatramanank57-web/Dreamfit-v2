@@ -1039,12 +1039,12 @@ export default function CuttingMasterWorks() {
                         </h3>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                          <div className="flex items-center gap-1">
+                          {/* <div className="flex items-center gap-1">
                             <User size={14} className="text-gray-400" />
                             <span>
                               {work.order?.customer?.name || "Unknown"}
                             </span>
-                          </div>
+                          </div> */}
 
                           <div
                             className={`flex items-center gap-1 ${dueStatus.color}`}

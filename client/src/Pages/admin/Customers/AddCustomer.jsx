@@ -1,8 +1,8 @@
 // import { useState } from "react";
 // import { useNavigate } from "react-router-dom";
 // import { useDispatch, useSelector } from "react-redux";
-// import { 
-//   User, Phone, Mail, MapPin, Home, ChevronRight, X, Save, 
+// import {
+//   User, Phone, Mail, MapPin, Home, ChevronRight, X, Save,
 //   Building, Globe, BookOpen, AlertCircle, Hash, Calendar
 // } from "lucide-react";
 // import { createNewCustomer } from "../../../features/customer/customerSlice";
@@ -37,31 +37,31 @@
 //   const [errors, setErrors] = useState({});
 
 //   // Get base path based on user role
-//   const rolePath = user?.role === "ADMIN" ? "/admin" : 
-//                    user?.role === "STORE_KEEPER" ? "/storekeeper" : 
+//   const rolePath = user?.role === "ADMIN" ? "/admin" :
+//                    user?.role === "STORE_KEEPER" ? "/storekeeper" :
 //                    "/cuttingmaster";
 
 //   console.log("📍 Base path:", rolePath);
 
 //   const handleChange = (e) => {
 //     const { name, value } = e.target;
-    
+
 //     console.log(`✏️ Field changed: ${name} =`, value);
-    
+
 //     // Special handling for phone numbers
 //     if (name === "phone" || name === "whatsappNumber" || name === "pincode") {
 //       const numericValue = value.replace(/\D/g, '');
 //       const maxLength = name === "pincode" ? 6 : 10;
 //       const truncated = numericValue.slice(0, maxLength);
 //       setFormData(prev => ({ ...prev, [name]: truncated }));
-      
+
 //       // Clear error for this field
 //       if (errors[name]) {
 //         setErrors(prev => ({ ...prev, [name]: null }));
 //       }
 //     } else {
 //       setFormData(prev => ({ ...prev, [name]: value }));
-      
+
 //       // Clear error for this field
 //       if (errors[name]) {
 //         setErrors(prev => ({ ...prev, [name]: null }));
@@ -127,24 +127,24 @@
 
 //   const handleSubmit = async (e) => {
 //     e.preventDefault();
-    
+
 //     console.log("🚀 ========== FORM SUBMIT START ==========");
 //     console.log("📋 Raw formData:", {
 //       ...formData,
 //       dateOfBirth: formData.dateOfBirth ? `"${formData.dateOfBirth}"` : "empty"
 //     });
-    
+
 //     if (!validateForm()) {
 //       console.log("❌ Form validation failed");
 //       showToast.error("Please fix the errors in the form");
 //       return;
 //     }
-    
+
 //     // Process date of birth
 //     let dobValue = undefined;
 //     if (formData.dateOfBirth) {
 //       console.log("📅 Processing date:", formData.dateOfBirth);
-      
+
 //       // Create date object (input is YYYY-MM-DD)
 //       const dateObj = new Date(formData.dateOfBirth);
 //       // Set to noon UTC to avoid timezone issues
@@ -152,7 +152,7 @@
 //       dobValue = dateObj.toISOString();
 //       console.log("📅 Final DOB value for API:", dobValue);
 //     }
-    
+
 //     // Prepare customer data for API - ✅ Using 'phone' field to match backend
 //     const customerData = {
 //       salutation: formData.salutation,
@@ -177,25 +177,25 @@
 //       const result = await dispatch(createNewCustomer(customerData)).unwrap();
 //       console.log("✅ Customer created successfully!");
 //       console.log("✅ Response from server:", result);
-      
+
 //       showToast.success("Customer created successfully! 🎉");
 //       console.log("🔄 Navigating to:", `${rolePath}/customers`);
 //       navigate(`${rolePath}/customers`);
 //     } catch (error) {
 //       console.error("❌ Error creating customer:", error);
-      
+
 //       // Check for duplicate phone error message
 //       const errorMsg = error.message || error.toString();
 //       console.log("❌ Error message:", errorMsg);
-      
-//       if (errorMsg.includes("already exists") || 
+
+//       if (errorMsg.includes("already exists") ||
 //           errorMsg.includes("duplicate") ||
 //           errorMsg.includes("phone") ||
 //           errorMsg.includes("Phone number")) {
-        
+
 //         console.log("❌ Duplicate phone number detected");
 //         showToast.error("❌ This mobile number is already registered! Please use a different number.");
-        
+
 //         // Highlight the phone field with error
 //         setErrors(prev => ({
 //           ...prev,
@@ -236,11 +236,11 @@
 //         <div className="bg-gray-900 text-green-400 p-4 rounded-2xl font-mono text-sm mb-4 overflow-auto max-h-40">
 //           <div className="flex justify-between items-center mb-2">
 //             <span className="font-bold">🔍 DEBUG INFO</span>
-//             <button 
+//             <button
 //               onClick={() => {
 //                 console.clear();
 //                 console.log("🧹 Console cleared");
-//               }} 
+//               }}
 //               className="text-xs bg-gray-700 px-2 py-1 rounded hover:bg-gray-600"
 //             >
 //               Clear Console
@@ -260,7 +260,7 @@
 //       <div className="flex items-center justify-between bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
 //         <div>
 //           <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-//             <span 
+//             <span
 //               onClick={handleCancel}
 //               className="hover:text-blue-600 cursor-pointer transition-colors"
 //             >
@@ -639,15 +639,24 @@
 //   );
 // }
 
-
-
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { 
-  User, Phone, Mail, MapPin, Home, ChevronRight, X, Save, 
-  Building, Globe, BookOpen, AlertCircle, Hash, Calendar
+import {
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  Home,
+  ChevronRight,
+  X,
+  Save,
+  Building,
+  Globe,
+  BookOpen,
+  AlertCircle,
+  Hash,
+  Calendar,
 } from "lucide-react";
 import { createNewCustomer } from "../../../features/customer/customerSlice";
 import showToast from "../../../utils/toast";
@@ -675,41 +684,44 @@ export default function AddCustomer() {
     city: "",
     state: "",
     pincode: "",
-    notes: ""
+    notes: "",
   });
 
   const [errors, setErrors] = useState({});
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Get base path based on user role
-  const rolePath = user?.role === "ADMIN" ? "/admin" : 
-                   user?.role === "STORE_KEEPER" ? "/storekeeper" : 
-                   "/cuttingmaster";
+  const rolePath =
+    user?.role === "ADMIN"
+      ? "/admin"
+      : user?.role === "STORE_KEEPER"
+        ? "/storekeeper"
+        : "/cuttingmaster";
 
   console.log("📍 Base path:", rolePath);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     console.log(`✏️ Field changed: ${name} =`, value);
-    
+
     // Special handling for phone numbers
     if (name === "phone" || name === "whatsappNumber" || name === "pincode") {
-      const numericValue = value.replace(/\D/g, '');
+      const numericValue = value.replace(/\D/g, "");
       const maxLength = name === "pincode" ? 6 : 10;
       const truncated = numericValue.slice(0, maxLength);
-      setFormData(prev => ({ ...prev, [name]: truncated }));
-      
+      setFormData((prev) => ({ ...prev, [name]: truncated }));
+
       // Clear error for this field
       if (errors[name]) {
-        setErrors(prev => ({ ...prev, [name]: null }));
+        setErrors((prev) => ({ ...prev, [name]: null }));
       }
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-      
+      setFormData((prev) => ({ ...prev, [name]: value }));
+
       // Clear error for this field
       if (errors[name]) {
-        setErrors(prev => ({ ...prev, [name]: null }));
+        setErrors((prev) => ({ ...prev, [name]: null }));
       }
     }
   };
@@ -739,7 +751,10 @@ export default function AddCustomer() {
       console.log("❌ WhatsApp number missing");
     } else if (formData.whatsappNumber.length !== 10) {
       newErrors.whatsappNumber = "WhatsApp number must be 10 digits";
-      console.log("❌ WhatsApp number invalid length:", formData.whatsappNumber.length);
+      console.log(
+        "❌ WhatsApp number invalid length:",
+        formData.whatsappNumber.length,
+      );
     }
 
     // Validate email if provided
@@ -772,24 +787,24 @@ export default function AddCustomer() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     console.log("🚀 ========== FORM SUBMIT START ==========");
     console.log("📋 Raw formData:", {
       ...formData,
-      dateOfBirth: formData.dateOfBirth ? `"${formData.dateOfBirth}"` : "empty"
+      dateOfBirth: formData.dateOfBirth ? `"${formData.dateOfBirth}"` : "empty",
     });
-    
+
     if (!validateForm()) {
       console.log("❌ Form validation failed");
       showToast.error("Please fix the errors in the form");
       return;
     }
-    
+
     // Process date of birth
     let dobValue = undefined;
     if (formData.dateOfBirth) {
       console.log("📅 Processing date:", formData.dateOfBirth);
-      
+
       // Create date object (input is YYYY-MM-DD)
       const dateObj = new Date(formData.dateOfBirth);
       // Set to noon UTC to avoid timezone issues
@@ -797,7 +812,7 @@ export default function AddCustomer() {
       dobValue = dateObj.toISOString();
       console.log("📅 Final DOB value for API:", dobValue);
     }
-    
+
     // Prepare customer data for API - Using 'phone' field to match backend
     const customerData = {
       salutation: formData.salutation,
@@ -812,7 +827,7 @@ export default function AddCustomer() {
       city: formData.city.trim() || undefined,
       state: formData.state.trim() || undefined,
       pincode: formData.pincode || undefined,
-      notes: formData.notes.trim() || undefined
+      notes: formData.notes.trim() || undefined,
     };
 
     console.log("📦 Final customerData being sent to API:", customerData);
@@ -822,29 +837,36 @@ export default function AddCustomer() {
       const result = await dispatch(createNewCustomer(customerData)).unwrap();
       console.log("✅ Customer created successfully!");
       console.log("✅ Response from server:", result);
-      
+
+      // showToast.success("Customer created successfully! 🎉");
+      // console.log("🔄 Navigating to:", `${rolePath}/customers`);
+      // navigate(`${rolePath}/customers`);
       showToast.success("Customer created successfully! 🎉");
-      console.log("🔄 Navigating to:", `${rolePath}/customers`);
-      navigate(`${rolePath}/customers`);
+      console.log("🔄 Navigating to customer details:", result.data?._id);
+      console.log("🔗 URL:", `${rolePath}/customers/${result.data?._id}`);
+      navigate(`${rolePath}/customers/${result.data?._id}`);
     } catch (error) {
       console.error("❌ Error creating customer:", error);
-      
+
       // Check for duplicate phone error message
       const errorMsg = error.message || error.toString();
       console.log("❌ Error message:", errorMsg);
-      
-      if (errorMsg.includes("already exists") || 
-          errorMsg.includes("duplicate") ||
-          errorMsg.includes("phone") ||
-          errorMsg.includes("Phone number")) {
-        
+
+      if (
+        errorMsg.includes("already exists") ||
+        errorMsg.includes("duplicate") ||
+        errorMsg.includes("phone") ||
+        errorMsg.includes("Phone number")
+      ) {
         console.log("❌ Duplicate phone number detected");
-        showToast.error("❌ This mobile number is already registered! Please use a different number.");
-        
+        showToast.error(
+          "❌ This mobile number is already registered! Please use a different number.",
+        );
+
         // Highlight the phone field with error
-        setErrors(prev => ({
+        setErrors((prev) => ({
           ...prev,
-          phone: "This phone number is already taken"
+          phone: "This phone number is already taken",
         }));
       } else {
         console.log("❌ Unknown error:", errorMsg);
@@ -870,7 +892,7 @@ export default function AddCustomer() {
   const getCustomerIdPreview = () => {
     const year = new Date().getFullYear();
     const nextNumber = (customers?.length || 0) + 1;
-    const sequential = String(nextNumber).padStart(5, '0');
+    const sequential = String(nextNumber).padStart(5, "0");
     return `CUST-${year}-${sequential}`;
   };
 
@@ -891,12 +913,22 @@ export default function AddCustomer() {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-2 hover:bg-slate-100 rounded-xl transition-all"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
             </svg>
           </button>
         </div>
-        
+
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="absolute top-full left-0 right-0 bg-white border-b border-slate-200 shadow-lg p-4 z-40">
@@ -962,7 +994,7 @@ export default function AddCustomer() {
         <div className="hidden lg:flex items-center justify-between bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-6">
           <div>
             <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-              <span 
+              <span
                 onClick={handleCancel}
                 className="hover:text-blue-600 cursor-pointer transition-colors"
               >
@@ -971,7 +1003,9 @@ export default function AddCustomer() {
               <ChevronRight size={14} />
               <span className="text-blue-600 font-bold">Add New Customer</span>
             </div>
-            <h1 className="text-2xl font-black text-slate-800 tracking-tight">Add Customer</h1>
+            <h1 className="text-2xl font-black text-slate-800 tracking-tight">
+              Add Customer
+            </h1>
           </div>
           <button
             onClick={handleCancel}
@@ -987,8 +1021,12 @@ export default function AddCustomer() {
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 sm:p-4 flex items-center gap-3 mb-4">
             <User size={18} className="text-blue-600 flex-shrink-0" />
             <div className="min-w-0 flex-1">
-              <span className="text-[10px] sm:text-xs text-blue-600 font-black uppercase tracking-wider">Preview</span>
-              <p className="text-base sm:text-lg font-black text-slate-800 truncate">{getFullName()}</p>
+              <span className="text-[10px] sm:text-xs text-blue-600 font-black uppercase tracking-wider">
+                Preview
+              </span>
+              <p className="text-base sm:text-lg font-black text-slate-800 truncate">
+                {getFullName()}
+              </p>
             </div>
           </div>
         )}
@@ -998,15 +1036,24 @@ export default function AddCustomer() {
           <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 sm:p-4 flex items-center gap-3 mb-4">
             <Hash size={18} className="text-purple-600 flex-shrink-0" />
             <div className="min-w-0 flex-1">
-              <span className="text-[10px] sm:text-xs text-purple-600 font-black uppercase tracking-wider">Customer ID Preview</span>
-              <p className="text-sm sm:text-base lg:text-lg font-mono font-bold text-purple-800 truncate">{getCustomerIdPreview()}</p>
-              <p className="text-[8px] sm:text-xs text-purple-500 mt-1">Auto-generated on save</p>
+              <span className="text-[10px] sm:text-xs text-purple-600 font-black uppercase tracking-wider">
+                Customer ID Preview
+              </span>
+              <p className="text-sm sm:text-base lg:text-lg font-mono font-bold text-purple-800 truncate">
+                {getCustomerIdPreview()}
+              </p>
+              <p className="text-[8px] sm:text-xs text-purple-500 mt-1">
+                Auto-generated on save
+              </p>
             </div>
           </div>
         )}
 
         {/* Main Form */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 overflow-hidden"
+        >
           {/* Customer Detail Section */}
           <div className="p-4 sm:p-6 lg:p-8 border-b border-slate-100">
             <h2 className="text-base sm:text-lg font-black text-slate-800 mb-4 sm:mb-6 flex items-center gap-2">
@@ -1024,7 +1071,10 @@ export default function AddCustomer() {
                 </label>
                 <div className="flex flex-wrap gap-3 sm:gap-4">
                   {["Mr.", "Mrs.", "Ms.", "Dr."].map((sal) => (
-                    <label key={sal} className="flex items-center gap-1.5 sm:gap-2 cursor-pointer group">
+                    <label
+                      key={sal}
+                      className="flex items-center gap-1.5 sm:gap-2 cursor-pointer group"
+                    >
                       <input
                         type="radio"
                         name="salutation"
@@ -1054,7 +1104,9 @@ export default function AddCustomer() {
                     onChange={handleChange}
                     placeholder="Enter first name"
                     className={`w-full px-3 sm:px-5 py-3 sm:py-4 bg-slate-50 border ${
-                      errors.firstName ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                      errors.firstName
+                        ? "border-red-300 bg-red-50"
+                        : "border-slate-200"
                     } rounded-lg sm:rounded-xl focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium text-sm sm:text-base`}
                   />
                   {errors.firstName && (
@@ -1084,13 +1136,16 @@ export default function AddCustomer() {
                   Date of Birth
                 </label>
                 <div className="relative">
-                  <Calendar className="absolute left-3 sm:left-4 top-3 sm:top-4 text-slate-400" size={16} />
+                  <Calendar
+                    className="absolute left-3 sm:left-4 top-3 sm:top-4 text-slate-400"
+                    size={16}
+                  />
                   <input
                     type="date"
                     name="dateOfBirth"
                     value={formData.dateOfBirth}
                     onChange={handleChange}
-                    max={new Date().toISOString().split('T')[0]}
+                    max={new Date().toISOString().split("T")[0]}
                     className="w-full pl-9 sm:pl-12 pr-3 sm:pr-5 py-3 sm:py-4 bg-slate-50 border border-slate-200 rounded-lg sm:rounded-xl focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium text-sm sm:text-base"
                   />
                 </div>
@@ -1102,7 +1157,10 @@ export default function AddCustomer() {
                   Phone Number <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <Phone className="absolute left-3 sm:left-4 top-3 sm:top-4 text-slate-400" size={16} />
+                  <Phone
+                    className="absolute left-3 sm:left-4 top-3 sm:top-4 text-slate-400"
+                    size={16}
+                  />
                   <input
                     type="tel"
                     name="phone"
@@ -1111,7 +1169,9 @@ export default function AddCustomer() {
                     placeholder="Enter 10-digit mobile number"
                     maxLength="10"
                     className={`w-full pl-9 sm:pl-12 pr-3 sm:pr-5 py-3 sm:py-4 bg-slate-50 border ${
-                      errors.phone ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                      errors.phone
+                        ? "border-red-300 bg-red-50"
+                        : "border-slate-200"
                     } rounded-lg sm:rounded-xl focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium text-sm sm:text-base`}
                   />
                 </div>
@@ -1128,7 +1188,10 @@ export default function AddCustomer() {
                   WhatsApp Number <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <Phone className="absolute left-3 sm:left-4 top-3 sm:top-4 text-slate-400" size={16} />
+                  <Phone
+                    className="absolute left-3 sm:left-4 top-3 sm:top-4 text-slate-400"
+                    size={16}
+                  />
                   <input
                     type="tel"
                     name="whatsappNumber"
@@ -1137,7 +1200,9 @@ export default function AddCustomer() {
                     placeholder="Enter WhatsApp number"
                     maxLength="10"
                     className={`w-full pl-9 sm:pl-12 pr-3 sm:pr-5 py-3 sm:py-4 bg-slate-50 border ${
-                      errors.whatsappNumber ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                      errors.whatsappNumber
+                        ? "border-red-300 bg-red-50"
+                        : "border-slate-200"
                     } rounded-lg sm:rounded-xl focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium text-sm sm:text-base`}
                   />
                 </div>
@@ -1154,7 +1219,10 @@ export default function AddCustomer() {
                   Email Address
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 sm:left-4 top-3 sm:top-4 text-slate-400" size={16} />
+                  <Mail
+                    className="absolute left-3 sm:left-4 top-3 sm:top-4 text-slate-400"
+                    size={16}
+                  />
                   <input
                     type="email"
                     name="email"
@@ -1162,7 +1230,9 @@ export default function AddCustomer() {
                     onChange={handleChange}
                     placeholder="Enter email address (optional)"
                     className={`w-full pl-9 sm:pl-12 pr-3 sm:pr-5 py-3 sm:py-4 bg-slate-50 border ${
-                      errors.email ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                      errors.email
+                        ? "border-red-300 bg-red-50"
+                        : "border-slate-200"
                     } rounded-lg sm:rounded-xl focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium text-sm sm:text-base`}
                   />
                 </div>
@@ -1179,7 +1249,10 @@ export default function AddCustomer() {
                   Address Line 1 <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <Home className="absolute left-3 sm:left-4 top-3 sm:top-4 text-slate-400" size={16} />
+                  <Home
+                    className="absolute left-3 sm:left-4 top-3 sm:top-4 text-slate-400"
+                    size={16}
+                  />
                   <input
                     type="text"
                     name="addressLine1"
@@ -1187,7 +1260,9 @@ export default function AddCustomer() {
                     onChange={handleChange}
                     placeholder="House no., Building, Street"
                     className={`w-full pl-9 sm:pl-12 pr-3 sm:pr-5 py-3 sm:py-4 bg-slate-50 border ${
-                      errors.addressLine1 ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                      errors.addressLine1
+                        ? "border-red-300 bg-red-50"
+                        : "border-slate-200"
                     } rounded-lg sm:rounded-xl focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium text-sm sm:text-base`}
                   />
                 </div>
@@ -1204,7 +1279,10 @@ export default function AddCustomer() {
                   Address Line 2
                 </label>
                 <div className="relative">
-                  <Building className="absolute left-3 sm:left-4 top-3 sm:top-4 text-slate-400" size={16} />
+                  <Building
+                    className="absolute left-3 sm:left-4 top-3 sm:top-4 text-slate-400"
+                    size={16}
+                  />
                   <input
                     type="text"
                     name="addressLine2"
@@ -1223,7 +1301,10 @@ export default function AddCustomer() {
                     City
                   </label>
                   <div className="relative">
-                    <MapPin className="absolute left-3 top-3 sm:left-4 sm:top-4 text-slate-400" size={14} />
+                    <MapPin
+                      className="absolute left-3 top-3 sm:left-4 sm:top-4 text-slate-400"
+                      size={14}
+                    />
                     <input
                       type="text"
                       name="city"
@@ -1239,7 +1320,10 @@ export default function AddCustomer() {
                     State
                   </label>
                   <div className="relative">
-                    <Globe className="absolute left-3 top-3 sm:left-4 sm:top-4 text-slate-400" size={14} />
+                    <Globe
+                      className="absolute left-3 top-3 sm:left-4 sm:top-4 text-slate-400"
+                      size={14}
+                    />
                     <input
                       type="text"
                       name="state"
@@ -1262,7 +1346,9 @@ export default function AddCustomer() {
                     placeholder="Pincode"
                     maxLength="6"
                     className={`w-full px-3 sm:px-5 py-3 sm:py-4 bg-slate-50 border ${
-                      errors.pincode ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                      errors.pincode
+                        ? "border-red-300 bg-red-50"
+                        : "border-slate-200"
                     } rounded-lg sm:rounded-xl focus:ring-2 sm:focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium text-sm sm:text-base`}
                   />
                   {errors.pincode && (
@@ -1279,7 +1365,10 @@ export default function AddCustomer() {
                   Additional Notes
                 </label>
                 <div className="relative">
-                  <BookOpen className="absolute left-3 sm:left-4 top-3 sm:top-4 text-slate-400" size={16} />
+                  <BookOpen
+                    className="absolute left-3 sm:left-4 top-3 sm:top-4 text-slate-400"
+                    size={16}
+                  />
                   <textarea
                     name="notes"
                     value={formData.notes}

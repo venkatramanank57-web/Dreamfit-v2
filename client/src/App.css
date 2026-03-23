@@ -131,3 +131,36 @@
   transform: scale(1.1);
   transition: transform 0.2s;
 }
+
+
+
+
+
+
+
+
+
+/* 1. Allow the badges to overflow the date cell */
+.react-datepicker__day {
+  overflow: visible !important;
+  width: 2.5rem !important; /* Proper spacing */
+  height: 2.5rem !important;
+  line-height: 2.5rem !important;
+  margin: 0.3rem !important;
+}
+
+/* 2. Ensure the day container doesn't clip the bottom badge */
+.react-datepicker__day-name, .react-datepicker__day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 3. Optional: Add some space between weeks so badges don't touch next row */
+.react-datepicker__week {
+  margin-bottom: 8px;
+}
+
+
+
+

@@ -400,6 +400,7 @@ export default function MainLayout() {
   const getNavigationItems = () => {
     const items = [
       { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard', path: `/${rolePath}/dashboard`, show: true },
+      { id: 'customers', icon: Users, label: 'Customers', path: `/${rolePath}/customers`, show: canViewCustomers },
       { id: 'orders', icon: ShoppingCart, label: 'Orders', path: `/${rolePath}/orders`, show: canViewOrders },
       { id: 'works', icon: Briefcase, label: 'Works', path: `/${rolePath}/works`, show: canViewWorks },
       { id: 'tailors', icon: Scissors, label: 'Tailors', path: `/${rolePath}/tailors`, show: canViewTailors },
@@ -407,7 +408,6 @@ export default function MainLayout() {
       { id: 'store-keepers', icon: Store, label: 'Store Keepers', path: `/${rolePath}/store-keepers`, show: canViewStoreKeepers },
       { id: 'measurements', icon: Ruler, label: 'Measurements', path: `/${rolePath}/measurements`, show: canViewMeasurement },
       { id: 'products', icon: Package, label: 'Products', path: `/${rolePath}/products`, show: canViewProducts },
-      { id: 'customers', icon: Users, label: 'Customers', path: `/${rolePath}/customers`, show: canViewCustomers },
       { id: 'banking', icon: Landmark, label: 'Banking', path: '#', show: canViewBanking, isDropdown: true },
       // { id: 'reports', icon: BarChart3, label: 'Reports', path: '#', show: canViewReports, isDropdown: true },
       { id: 'staff', icon: UserCircle, label: 'Staff', path: `/${rolePath}/staff`, show: canViewStaff },

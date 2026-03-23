@@ -102,8 +102,8 @@ import {
   deleteGarment,
   updateGarmentImages,
   deleteGarmentImage,
-  // 🟢 NEW: Import the controller function
   getCustomerOrderDates,
+   getDeliveryDates,
 } from "../controllers/garment.controller.js";
 import { protect, authorize } from "../middleware/auth.middleware.js";
 
@@ -140,6 +140,14 @@ router.get(
   authorize("ADMIN", "STORE_KEEPER", "CUTTING_MASTER"),
   getCustomerOrderDates
 );
+
+
+
+
+
+
+// 📅 Get all delivery dates for calendar
+router.get('/delivery-dates', getDeliveryDates);
 
 // ============================================
 // 📦 Existing Garment Routes

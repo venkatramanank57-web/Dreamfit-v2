@@ -1516,8 +1516,269 @@ import API from "../../app/axios";
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// // frontend/src/features/orders/orderApi.js
+// import axiosInstance from "../../app/axios"; // 1. Renamed import to avoid conflict
+
+// // ============================================
+// // 📦 ORDER API - All API calls with DATE FILTER SUPPORT
+// // ============================================
+
+// const ORDER_BASE = "/orders";
+
+// /**
+//  * Helper function to build query string with filters
+//  * @param {Object} params - Query parameters
+//  * @returns {string} - Query string
+//  */
+// const buildQueryString = (params = {}) => {
+//   const queryParams = new URLSearchParams();
+  
+//   Object.entries(params).forEach(([key, value]) => {
+//     if (value !== undefined && value !== null && value !== '') {
+//       queryParams.append(key, value);
+//     }
+//   });
+  
+//   const queryString = queryParams.toString();
+//   return queryString ? `?${queryString}` : '';
+// };
+
+// // ============================================
+// // 📊 STATS & DASHBOARD
+// // ============================================
+
+// export const getOrderStats = async (params = {}) => {
+//   try {
+//     const queryString = buildQueryString(params);
+//     const response = await axiosInstance.get(`${ORDER_BASE}/stats${queryString}`);
+//     return response.data;
+//   } catch (error) {
+//     console.error("❌ [API] Error fetching order stats:", error);
+//     throw error;
+//   }
+// };
+
+// export const getDashboardData = async () => {
+//   try {
+//     const response = await axiosInstance.get(`${ORDER_BASE}/dashboard`);
+//     return response.data;
+//   } catch (error) {
+//     console.error("❌ [API] Error fetching dashboard data:", error);
+//     throw error;
+//   }
+// };
+
+// export const getRecentOrders = async (params = {}) => {
+//   try {
+//     const queryString = buildQueryString(params);
+//     const response = await axiosInstance.get(`${ORDER_BASE}/recent${queryString}`);
+//     return response.data;
+//   } catch (error) {
+//     console.error("❌ [API] Error fetching recent orders:", error);
+//     throw error;
+//   }
+// };
+
+// export const getFilteredOrders = async (params = {}) => {
+//   try {
+//     const queryString = buildQueryString(params);
+//     const response = await axiosInstance.get(`${ORDER_BASE}${queryString}`);
+//     return response.data;
+//   } catch (error) {
+//     console.error("❌ [API] Error fetching filtered orders:", error);
+//     throw error;
+//   }
+// };
+
+// export const getReadyToDeliveryOrders = async (params = {}) => {
+//   try {
+//     const queryString = buildQueryString(params);
+//     const response = await axiosInstance.get(`${ORDER_BASE}/ready-to-delivery${queryString}`);
+//     return response.data;
+//   } catch (error) {
+//     console.error("❌ [API] Error fetching ready to delivery orders:", error);
+//     throw error;
+//   }
+// };
+
+// // ============================================
+// // 📝 CRUD OPERATIONS
+// // ============================================
+
+// /**
+//  * Create new order with payments and images
+//  * @param {FormData|Object} orderData - Order data (Supports both JSON and FormData)
+//  */
+// export const createOrder = async (orderData) => {
+//   console.log("\n========== 🚀 [API] createOrder START ==========");
+  
+//   const isFormData = orderData instanceof FormData;
+  
+//   try {
+//     const config = {
+//       headers: {
+//         // 🔥 Set header dynamically: browser handles boundary for FormData automatically
+//         'Content-Type': isFormData ? 'multipart/form-data' : 'application/json',
+//       }
+//     };
+
+//     const response = await axiosInstance.post(ORDER_BASE, orderData, config);
+    
+//     console.log("✅ [API] createOrder SUCCESS!");
+//     return response.data;
+//   } catch (error) {
+//     console.error("\n========== ❌ [API] createOrder ERROR ==========");
+//     console.error("❌ Message:", error.response?.data?.message || error.message);
+//     throw error;
+//   }
+// };
+
+// export const getAllOrders = async (params = {}) => {
+//   return await getFilteredOrders(params);
+// };
+
+// export const getOrdersByCustomer = async (customerId, params = {}) => {
+//   try {
+//     const queryString = buildQueryString(params);
+//     const response = await axiosInstance.get(`${ORDER_BASE}/customer/${customerId}${queryString}`);
+//     return response.data;
+//   } catch (error) {
+//     console.error(`❌ Error fetching customer orders:`, error);
+//     throw error;
+//   }
+// };
+
+// export const getOrderById = async (id) => {
+//   try {
+//     const response = await axiosInstance.get(`${ORDER_BASE}/${id}`);
+//     return response.data;
+//   } catch (error) {
+//     console.error(`❌ Error fetching order ${id}:`, error);
+//     throw error;
+//   }
+// };
+
+// export const updateOrder = async (id, updateData) => {
+//   try {
+//     const response = await axiosInstance.put(`${ORDER_BASE}/${id}`, updateData);
+//     return response.data;
+//   } catch (error) {
+//     console.error(`❌ Error updating order:`, error);
+//     throw error;
+//   }
+// };
+
+// export const updateOrderStatus = async (id, status) => {
+//   try {
+//     const response = await axiosInstance.patch(`${ORDER_BASE}/${id}/status`, { status });
+//     return response.data;
+//   } catch (error) {
+//     console.error(`❌ Error updating status:`, error);
+//     throw error;
+//   }
+// };
+
+// export const deleteOrder = async (id) => {
+//   try {
+//     const response = await axiosInstance.delete(`${ORDER_BASE}/${id}`);
+//     return response.data;
+//   } catch (error) {
+//     console.error(`❌ Error deleting order:`, error);
+//     throw error;
+//   }
+// };
+
+// // ============================================
+// // 💰 PAYMENT ROUTES
+// // ============================================
+
+// export const addPaymentToOrder = async (orderId, paymentData) => {
+//   try {
+//     const response = await axiosInstance.post(`${ORDER_BASE}/${orderId}/payments`, paymentData);
+//     return response.data;
+//   } catch (error) {
+//     console.error(`❌ Error adding payment:`, error);
+//     throw error;
+//   }
+// };
+
+// export const getOrderPayments = async (orderId) => {
+//   try {
+//     const response = await axiosInstance.get(`${ORDER_BASE}/${orderId}/payments`);
+//     return response.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
+// // ============================================
+// // 🟢 ORDER DATES ROUTE (for calendar)
+// // ============================================
+
+// export const getOrderDates = async (params = {}) => {
+//   try {
+//     const queryString = buildQueryString(params);
+//     const response = await axiosInstance.get(`${ORDER_BASE}/order-dates${queryString}`);
+//     return response.data;
+//   } catch (error) {
+//     console.error("❌ Error fetching order dates:", error);
+//     throw error;
+//   }
+// };
+
+// // 2. Exporting as 'orderApi' as intended
+// const orderApi = {
+//   getOrderStats,
+//   getDashboardData,
+//   getRecentOrders,
+//   getFilteredOrders,
+//   getReadyToDeliveryOrders,
+//   createOrder,
+//   getAllOrders,
+//   getOrdersByCustomer,
+//   getOrderById,
+//   updateOrder,
+//   updateOrderStatus,
+//   deleteOrder,
+//   addPaymentToOrder,
+//   getOrderPayments,
+//   getOrderDates
+// };
+
+// export default orderApi;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // frontend/src/features/orders/orderApi.js
-import axiosInstance from "../../app/axios"; // 1. Renamed import to avoid conflict
+import axiosInstance from "../../app/axios";
 
 // ============================================
 // 📦 ORDER API - All API calls with DATE FILTER SUPPORT
@@ -1617,7 +1878,6 @@ export const createOrder = async (orderData) => {
   try {
     const config = {
       headers: {
-        // 🔥 Set header dynamically: browser handles boundary for FormData automatically
         'Content-Type': isFormData ? 'multipart/form-data' : 'application/json',
       }
     };
@@ -1712,7 +1972,7 @@ export const getOrderPayments = async (orderId) => {
 };
 
 // ============================================
-// 🟢 ORDER DATES ROUTE (for calendar)
+// 🟢 ORDER DATES ROUTE (for calendar green dots)
 // ============================================
 
 export const getOrderDates = async (params = {}) => {
@@ -1726,7 +1986,36 @@ export const getOrderDates = async (params = {}) => {
   }
 };
 
-// 2. Exporting as 'orderApi' as intended
+// ============================================
+// 📅 DELIVERY DATES ROUTE (for calendar red dots - all customers)
+// ============================================
+
+export const getDeliveryDates = async (params = {}) => {
+  try {
+    const { month, year } = params;
+    
+    if (!month || !year) {
+      console.error("❌ [API] Month and year are required for getDeliveryDates");
+      throw new Error("Month and year are required");
+    }
+    
+    console.log(`📅 [API] Fetching delivery dates for month: ${month}, year: ${year}`);
+    
+    const queryString = buildQueryString({ month, year });
+    const response = await axiosInstance.get(`${ORDER_BASE}/delivery-dates${queryString}`);
+    
+    console.log("✅ [API] Delivery dates response:", response.data);
+    return response.data; // Should return { success: true, allDates: [{ _id: "2026-03-05", count: 4 }] }
+  } catch (error) {
+    console.error("❌ [API] Error fetching delivery dates:", error);
+    throw error;
+  }
+};
+
+// ============================================
+// 📤 EXPORT
+// ============================================
+
 const orderApi = {
   getOrderStats,
   getDashboardData,
@@ -1742,7 +2031,8 @@ const orderApi = {
   deleteOrder,
   addPaymentToOrder,
   getOrderPayments,
-  getOrderDates
+  getOrderDates,      // 🟢 For green dots
+  getDeliveryDates    // 🔴 NEW: For red dots (all customers)
 };
 
 export default orderApi;
