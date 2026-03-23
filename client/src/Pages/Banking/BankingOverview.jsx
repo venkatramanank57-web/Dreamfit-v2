@@ -1006,7 +1006,7 @@ import {
   selectTransactionLoading
 } from '../../features/transaction/transactionSlice';
 import StatCard from '../../components/common/StatCard';
-import ExportTransactions from '../../components/banking/ExportTransactions';
+import ExportTransactions from '../../components/Banking/ExportTransactions';
 import showToast from '../../utils/toast';
 
 export default function BankingOverview() {
