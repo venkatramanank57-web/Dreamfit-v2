@@ -1399,44 +1399,118 @@ export const getAllCustomers = async (req, res) => {
  * @route   GET /api/customers/with-payments
  * @access  Private
  */
+// export const getCustomersWithPaymentSummary = async (req, res) => {
+//   try {
+//     console.log("📋 Fetching all customers with payment summary...");
+    
+//     // ✅ OPTIONAL: Add populate if you want templates in list view
+//     const customers = await Customer.find()
+//       .populate('measurementTemplates') // Optional - remove if not needed
+//       .sort({ createdAt: -1 })
+//       .limit(50);
+    
+//     // Get payment summaries for all customers
+//     const customersWithPayments = await Promise.all(
+//       customers.map(async (customer) => {
+//         const paymentSummary = await getCustomerPaymentSummary(customer._id);
+//         return {
+//           ...customer.toObject(),
+//           paymentSummary
+//         };
+//       })
+//     );
+    
+//     console.log(`✅ Found ${customers.length} customers with payment data`);
+
+//     res.status(200).json({
+//       success: true,
+//       count: customers.length,
+//       customers: customersWithPayments
+//     });
+//   } catch (error) {
+//     console.error("❌ Get customers with payments error:", error);
+//     res.status(500).json({ 
+//       success: false,
+//       message: error.message 
+//     });
+//   }
+// };
+
+// ==================== SINGLE CUSTOMER FUNCTIONS ====================
+
+
+/**
+ * @desc    Get all customers with aggregated payment/order summary
+ * @route   GET /api/customers/with-payments
+ * @access  Private
+ */
 export const getCustomersWithPaymentSummary = async (req, res) => {
   try {
-    console.log("📋 Fetching all customers with payment summary...");
-    
-    // ✅ OPTIONAL: Add populate if you want templates in list view
-    const customers = await Customer.find()
-      .populate('measurementTemplates') // Optional - remove if not needed
-      .sort({ createdAt: -1 })
-      .limit(50);
-    
-    // Get payment summaries for all customers
-    const customersWithPayments = await Promise.all(
-      customers.map(async (customer) => {
-        const paymentSummary = await getCustomerPaymentSummary(customer._id);
-        return {
-          ...customer.toObject(),
-          paymentSummary
-        };
-      })
-    );
-    
-    console.log(`✅ Found ${customers.length} customers with payment data`);
+    console.log("🚀 Running High-Performance Aggregation for Customer List...");
+
+    // SINGLE AGGREGATION CALL - Loops-ai backend-laye avoid panrom
+    const customersWithPayments = await Customer.aggregate([
+      { $sort: { createdAt: -1 } },
+      { $limit: 50 }, // Pagination limit
+      {
+        $lookup: {
+          from: "payments",
+          localField: "_id",
+          foreignField: "customer",
+          as: "paymentDetails"
+        }
+      },
+      {
+        $lookup: {
+          from: "orders",
+          localField: "_id",
+          foreignField: "customer",
+          as: "orderDetails"
+        }
+      },
+      {
+        $addFields: {
+          paymentSummary: {
+            totalPaid: { $sum: "$paymentDetails.amount" },
+            paymentCount: { $size: "$paymentDetails" },
+            totalOrders: { $size: { 
+              $filter: { 
+                input: "$orderDetails", 
+                as: "order", 
+                cond: { $eq: ["$$order.isActive", true] } 
+              } 
+            }},
+            pendingOrders: { $size: { 
+              $filter: { 
+                input: "$orderDetails", 
+                as: "order", 
+                cond: { $ne: ["$$order.status", "delivered"] } 
+              } 
+            }}
+          }
+        }
+      },
+      {
+        $project: {
+          paymentDetails: 0, // Inga thevaiyilladha heavy data-vai remove panrom
+          orderDetails: 0
+        }
+      }
+    ]);
+
+    console.log(`✅ Aggregation complete. Sending ${customersWithPayments.length} customers.`);
 
     res.status(200).json({
       success: true,
-      count: customers.length,
+      count: customersWithPayments.length,
       customers: customersWithPayments
     });
   } catch (error) {
-    console.error("❌ Get customers with payments error:", error);
-    res.status(500).json({ 
-      success: false,
-      message: error.message 
-    });
+    console.error("❌ High-Perf Aggregation Error:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ==================== SINGLE CUSTOMER FUNCTIONS ====================
 
 /**
  * @desc    Get customer by MongoDB ID (with payments and orders)

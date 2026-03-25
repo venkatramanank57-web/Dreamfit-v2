@@ -1634,14 +1634,68 @@ export const createTailor = async (req, res) => {
   }
 };
 
-// ===== GET ALL TAILORS =====
+// // ===== GET ALL TAILORS =====
+// export const getAllTailors = async (req, res) => {
+//   try {
+//     const { search, status, availability } = req.query;
+//     let query = { isActive: true };
+
+//     if (search) {
+//       query.$or = [
+//         { name: { $regex: search, $options: 'i' } },
+//         { phone: { $regex: search, $options: 'i' } },
+//         { email: { $regex: search, $options: 'i' } },
+//         { tailorId: { $regex: search, $options: 'i' } }
+//       ];
+//     }
+
+//     if (status && status !== 'all') {
+//       query.leaveStatus = status;
+//     }
+
+//     if (availability && availability !== 'all') {
+//       query.isAvailable = availability === 'available';
+//     }
+
+//     const tailors = await Tailor.find(query)
+//       .populate('createdBy', 'name')
+//       .sort({ createdAt: -1 });
+
+//     // ✅ Calculate workStats from actual works for each tailor
+//     for (let tailor of tailors) {
+//       const works = await Work.find({ 
+//         tailor: tailor._id,
+//         isActive: true 
+//       });
+
+//       const workStats = {
+//         totalAssigned: works.length,
+//         completed: works.filter(w => w.status === 'ready-to-deliver').length,
+//         pending: works.filter(w => ['pending', 'accepted'].includes(w.status)).length,
+//         inProgress: works.filter(w => 
+//           ['cutting-started', 'cutting-completed', 'sewing-started', 'sewing-completed', 'ironing']
+//           .includes(w.status)
+//         ).length
+//       };
+
+//       // Update the tailor object in memory (don't save to DB for performance)
+//       tailor.workStats = workStats;
+//     }
+
+//     res.json(tailors);
+//   } catch (error) {
+//     console.error("Get all tailors error:", error);
+//     res.status(500).json({ message: error.message });
+//   }
+// };
 export const getAllTailors = async (req, res) => {
   try {
     const { search, status, availability } = req.query;
-    let query = { isActive: true };
+    let matchQuery = { isActive: true };
 
+    // 1. Search Logic
     if (search) {
-      query.$or = [
+      matchQuery.$or = [
         { name: { $regex: search, $options: 'i' } },
         { phone: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
@@ -1649,46 +1703,63 @@ export const getAllTailors = async (req, res) => {
       ];
     }
 
+    // 2. Filter Logic
     if (status && status !== 'all') {
-      query.leaveStatus = status;
+      matchQuery.leaveStatus = status;
     }
 
     if (availability && availability !== 'all') {
-      query.isAvailable = availability === 'available';
+      matchQuery.isAvailable = availability === 'available';
     }
 
-    const tailors = await Tailor.find(query)
-      .populate('createdBy', 'name')
-      .sort({ createdAt: -1 });
+    // 🚀 HIGH-PERFORMANCE AGGREGATION PIPELINE
+    const tailors = await Tailor.aggregate([
+      { $match: matchQuery },
+      { $sort: { createdAt: -1 } },
+      
+      // 🔥 Join with Work collection (Single Call)
+      {
+        $lookup: {
+          from: "works", // Unga Work collection name check pannikonga
+          localField: "_id",
+          foreignField: "tailor",
+          as: "allWorks"
+        }
+      },
 
-    // ✅ Calculate workStats from actual works for each tailor
-    for (let tailor of tailors) {
-      const works = await Work.find({ 
-        tailor: tailor._id,
-        isActive: true 
-      });
+      // 📊 Calculate stats in Backend itself
+      {
+        $addFields: {
+          workStats: {
+            totalAssigned: { 
+              $size: { $filter: { input: "$allWorks", as: "w", cond: { $eq: ["$$w.isActive", true] } } } 
+            },
+            completed: { 
+              $size: { $filter: { input: "$allWorks", as: "w", cond: { $eq: ["$$w.status", "ready-to-deliver"] } } } 
+            },
+            pending: { 
+              $size: { $filter: { input: "$allWorks", as: "w", cond: { $in: ["$$w.status", ["pending", "accepted"]] } } } 
+            },
+            inProgress: { 
+              $size: { $filter: { input: "$allWorks", as: "w", cond: { 
+                $in: ["$$w.status", ["cutting-started", "cutting-completed", "sewing-started", "sewing-completed", "ironing"]] 
+              } } } 
+            }
+          }
+        }
+      },
 
-      const workStats = {
-        totalAssigned: works.length,
-        completed: works.filter(w => w.status === 'ready-to-deliver').length,
-        pending: works.filter(w => ['pending', 'accepted'].includes(w.status)).length,
-        inProgress: works.filter(w => 
-          ['cutting-started', 'cutting-completed', 'sewing-started', 'sewing-completed', 'ironing']
-          .includes(w.status)
-        ).length
-      };
+      // 🧹 Clean up: remove the heavy works array, only keep stats
+      { $project: { allWorks: 0 } }
+    ]);
 
-      // Update the tailor object in memory (don't save to DB for performance)
-      tailor.workStats = workStats;
-    }
+    res.status(200).json(tailors);
 
-    res.json(tailors);
   } catch (error) {
-    console.error("Get all tailors error:", error);
-    res.status(500).json({ message: error.message });
+    console.error("❌ High-Perf Tailor Fetch Error:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
-
 // ===== GET TAILOR BY ID =====
 export const getTailorById = async (req, res) => {
   try {

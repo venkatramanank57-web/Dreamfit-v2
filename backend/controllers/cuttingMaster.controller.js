@@ -3077,15 +3077,69 @@ export const createCuttingMaster = async (req, res) => {
  * GET ALL CUTTING MASTERS (Admin/Store Keeper)
  * GET /api/cutting-masters
  */
+// export const getAllCuttingMasters = async (req, res) => {
+//   try {
+//     console.log("📋 Fetching all cutting masters with query:", req.query);
+    
+//     const { search, availability } = req.query;
+//     let query = { isActive: true };
+
+//     if (search) {
+//       query.$or = [
+//         { name: { $regex: search, $options: 'i' } },
+//         { phone: { $regex: search, $options: 'i' } },
+//         { email: { $regex: search, $options: 'i' } },
+//         { cuttingMasterId: { $regex: search, $options: 'i' } }
+//       ];
+//     }
+
+//     if (availability && availability !== 'all') {
+//       query.isAvailable = availability === 'available';
+//     }
+
+//     const cuttingMasters = await CuttingMaster.find(query)
+//       .populate('createdBy', 'name')
+//       .select('-password')
+//       .sort({ createdAt: -1 });
+
+//     // Get work statistics for each cutting master
+//     for (let cm of cuttingMasters) {
+//       const workStats = await Work.aggregate([
+//         { $match: { cuttingMaster: cm._id, isActive: true } },
+//         { $group: {
+//           _id: null,
+//           total: { $sum: 1 },
+//           completed: { $sum: { $cond: [{ $eq: ["$status", "ready-to-deliver"] }, 1, 0] } },
+//           pending: { $sum: { $cond: [{ $in: ["$status", ["pending", "accepted"]] }, 1, 0] } },
+//           inProgress: { $sum: { $cond: [{ $in: ["$status", ["cutting-started", "cutting-completed", "sewing-started", "sewing-completed", "ironing"]] }, 1, 0] } }
+//         }}
+//       ]);
+
+//       cm = cm.toObject();
+//       cm.workStats = workStats[0] || { total: 0, completed: 0, pending: 0, inProgress: 0 };
+//     }
+
+//     res.json(cuttingMasters);
+//   } catch (error) {
+//     console.error("❌ Get all error:", error);
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+/**
+ * GET ALL CUTTING MASTERS (Admin/Store Keeper)
+ * GET /api/cutting-masters
+ * Optimized for High Performance
+ */
 export const getAllCuttingMasters = async (req, res) => {
   try {
-    console.log("📋 Fetching all cutting masters with query:", req.query);
+    console.log("🚀 Running High-Performance Aggregation for Cutting Master List...");
     
     const { search, availability } = req.query;
-    let query = { isActive: true };
+    let matchQuery = { isActive: true };
 
+    // Search Logic
     if (search) {
-      query.$or = [
+      matchQuery.$or = [
         { name: { $regex: search, $options: 'i' } },
         { phone: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
@@ -3093,38 +3147,83 @@ export const getAllCuttingMasters = async (req, res) => {
       ];
     }
 
+    // Availability Filter
     if (availability && availability !== 'all') {
-      query.isAvailable = availability === 'available';
+      matchQuery.isAvailable = availability === 'available';
     }
 
-    const cuttingMasters = await CuttingMaster.find(query)
-      .populate('createdBy', 'name')
-      .select('-password')
-      .sort({ createdAt: -1 });
+    // 🔥 SINGLE AGGREGATION PIPELINE - No more loops!
+    const cuttingMasters = await CuttingMaster.aggregate([
+      { $match: matchQuery },
+      { $sort: { createdAt: -1 } },
+      
+      // 1. Join with Works collection
+      {
+        $lookup: {
+          from: "works", 
+          localField: "_id",
+          foreignField: "cuttingMaster",
+          as: "workDetails"
+        }
+      },
 
-    // Get work statistics for each cutting master
-    for (let cm of cuttingMasters) {
-      const workStats = await Work.aggregate([
-        { $match: { cuttingMaster: cm._id, isActive: true } },
-        { $group: {
-          _id: null,
-          total: { $sum: 1 },
-          completed: { $sum: { $cond: [{ $eq: ["$status", "ready-to-deliver"] }, 1, 0] } },
-          pending: { $sum: { $cond: [{ $in: ["$status", ["pending", "accepted"]] }, 1, 0] } },
-          inProgress: { $sum: { $cond: [{ $in: ["$status", ["cutting-started", "cutting-completed", "sewing-started", "sewing-completed", "ironing"]] }, 1, 0] } }
-        }}
-      ]);
+      // 2. Calculate stats directly in DB
+      {
+        $addFields: {
+          workStats: {
+            total: { $size: "$workDetails" },
+            completed: { 
+              $size: { 
+                $filter: { 
+                  input: "$workDetails", 
+                  as: "w", 
+                  cond: { $eq: ["$$w.status", "ready-to-deliver"] } 
+                } 
+              } 
+            },
+            pending: { 
+              $size: { 
+                $filter: { 
+                  input: "$workDetails", 
+                  as: "w", 
+                  cond: { $in: ["$$w.status", ["pending", "accepted"]] } 
+                } 
+              } 
+            },
+            inProgress: { 
+              $size: { 
+                $filter: { 
+                  input: "$workDetails", 
+                  as: "w", 
+                  cond: { 
+                    $in: ["$$w.status", ["cutting-started", "cutting-completed", "sewing-started", "sewing-completed", "ironing"]] 
+                  } 
+                } 
+              } 
+            }
+          }
+        }
+      },
 
-      cm = cm.toObject();
-      cm.workStats = workStats[0] || { total: 0, completed: 0, pending: 0, inProgress: 0 };
-    }
+      // 3. Remove unwanted data Matrum Hide Password
+      {
+        $project: {
+          password: 0,
+          workDetails: 0
+        }
+      }
+    ]);
 
-    res.json(cuttingMasters);
+    console.log(`✅ Success: Fetched ${cuttingMasters.length} Cutting Masters with stats.`);
+    res.status(200).json(cuttingMasters);
+
   } catch (error) {
-    console.error("❌ Get all error:", error);
+    console.error("❌ Aggregation Error:", error);
     res.status(500).json({ message: error.message });
   }
 };
+
+
 
 /**
  * GET CUTTING MASTER BY ID

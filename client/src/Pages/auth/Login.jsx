@@ -43,41 +43,32 @@
 //       return;
 //     }
 
-//     let toastId; // To store loading toast ID
+//     let toastId;
 
 //     try {
 //       setLoading(true);
 //       dispatch(loginStart());
 
-//       // Show loading toast
 //       toastId = showToast.loading("Logging in...");
 
-//       // Backend API Call
 //       const data = await loginRequest(email, password);
 
-//       console.log("✅ Login successful:", data); // Debug log
+//       console.log("✅ Login successful:", data);
 
-//       // Dismiss loading toast
 //       showToast.dismiss(toastId);
 
-//       // Ensure data has the correct structure
 //       if (!data.token || !data.user) {
 //         throw new Error("Invalid response from server");
 //       }
 
-//       // If remember me is checked, we can set a longer expiry (handled by backend usually)
 //       if (rememberMe) {
-//         // You can implement remember me logic here if needed
 //         console.log("Remember me enabled");
 //       }
 
-//       // Redux-la data save pannuvom
 //       dispatch(loginSuccess(data));
 
-//       // Show success message
 //       showToast.success(`Welcome back, ${data.user.name || "User"}! 🎉`);
 
-//       // ROLE BASED REDIRECTION LOGIC 🚀
 //       const userRole = data.user.role;
 
 //       if (userRole === "ADMIN") {
@@ -91,7 +82,6 @@
 //         navigate("/");
 //       }
 //     } catch (err) {
-//       // Dismiss loading toast if it exists
 //       if (toastId) showToast.dismiss(toastId);
 
 //       const errorMessage =
@@ -105,7 +95,6 @@
 //     }
 //   };
 
-//   // Pre-fill demo accounts for quick testing
 //   const fillDemoAccount = (role) => {
 //     if (role === "admin") {
 //       setEmail("admin@dreamfit.com");
@@ -121,7 +110,7 @@
 
 //   return (
 //     <div className="min-h-screen grid grid-cols-1 md:grid-cols-2 font-sans">
-//       {/* LEFT SIDE - BRANDING */}
+//       {/* LEFT SIDE - BRANDING - Hidden on mobile, visible on md+ */}
 //       <div className="hidden md:flex bg-[#f3bacd] items-center justify-center p-12 relative overflow-hidden">
 //         {/* Background Watermark Logos */}
 //         <div className="absolute inset-0 opacity-[0.08] pointer-events-none">
@@ -153,7 +142,7 @@
 //         </div>
 
 //         <div className="max-w-md relative z-10 text-center flex flex-col items-center">
-//           {/* Main Logo Image (Bigger Now) */}
+//           {/* Main Logo */}
 //           <div className="mb-6 drop-shadow-xl transform hover:scale-105 transition-transform duration-300">
 //             <img
 //               src={logo}
@@ -198,19 +187,29 @@
 //         </div>
 //       </div>
 
-//       {/* RIGHT SIDE - FORM */}
-//       <div className="flex items-center justify-center bg-slate-50 p-8">
-//         <div className="w-full max-w-[420px] bg-white p-10 rounded-2xl shadow-xl border border-slate-100">
-//           <div className="mb-8 text-center md:text-left">
-//             <h1 className="text-3xl font-black text-slate-900 mb-2 tracking-tight">
+//       {/* RIGHT SIDE - FORM - Mobile optimized */}
+//       <div className="flex items-start md:items-center justify-center bg-slate-50 p-4 sm:p-6 md:p-8 min-h-screen md:min-h-0">
+//         <div className="w-full max-w-[420px] bg-white p-6 sm:p-8 md:p-10 rounded-2xl shadow-xl border border-slate-100 mt-4 md:mt-0">
+          
+//           {/* Mobile Logo - Only visible on mobile */}
+//           <div className="md:hidden flex justify-center mb-6">
+//             <img
+//               src={logo}
+//               alt="Dreamfit Couture"
+//               className="w-32 h-auto"
+//             />
+//           </div>
+
+//           <div className="mb-6 md:mb-8 text-center md:text-left">
+//             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2 tracking-tight">
 //               Welcome Back! 👋
 //             </h1>
-//             <p className="text-slate-500 font-medium">
+//             <p className="text-sm sm:text-base text-slate-500 font-medium">
 //               Access your dashboard using your credentials.
 //             </p>
 //           </div>
 
-//           <form onSubmit={handleLogin} className="space-y-5">
+//           <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
 //             {/* EMAIL */}
 //             <div>
 //               <label className="block text-xs font-black uppercase text-slate-500 mb-2 tracking-wider">
@@ -218,13 +217,13 @@
 //               </label>
 //               <div className="relative">
 //                 <MailIcon
-//                   className="absolute left-4 top-3.5 text-slate-400"
+//                   className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
 //                   size={18}
 //                 />
 //                 <input
 //                   type="email"
 //                   placeholder="name@company.com"
-//                   className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium"
+//                   className="w-full pl-12 pr-4 py-3 sm:py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium text-sm sm:text-base"
 //                   value={email}
 //                   onChange={(e) => setEmail(e.target.value)}
 //                   required
@@ -240,13 +239,13 @@
 //               </label>
 //               <div className="relative">
 //                 <LockIcon
-//                   className="absolute left-4 top-3.5 text-slate-400"
+//                   className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
 //                   size={18}
 //                 />
 //                 <input
 //                   type={showPassword ? "text" : "password"}
 //                   placeholder="••••••••"
-//                   className="w-full pl-12 pr-12 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium"
+//                   className="w-full pl-12 pr-12 py-3 sm:py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium text-sm sm:text-base"
 //                   value={password}
 //                   onChange={(e) => setPassword(e.target.value)}
 //                   required
@@ -255,7 +254,7 @@
 //                 />
 //                 <button
 //                   type="button"
-//                   className="absolute right-4 top-3.5 text-slate-400 hover:text-blue-600 transition-colors"
+//                   className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
 //                   onClick={() => setShowPassword(!showPassword)}
 //                   disabled={loading}
 //                 >
@@ -269,7 +268,7 @@
 //             </div>
 
 //             {/* OPTIONS */}
-//             <div className="flex items-center justify-between text-sm">
+//             <div className="flex flex-col xs:flex-row xs:items-center justify-between text-sm gap-3 xs:gap-0">
 //               <label className="flex items-center cursor-pointer group">
 //                 <input
 //                   type="checkbox"
@@ -278,13 +277,13 @@
 //                   onChange={(e) => setRememberMe(e.target.checked)}
 //                   disabled={loading}
 //                 />
-//                 <span className="ml-2 text-slate-600 group-hover:text-slate-900 transition-colors font-medium">
+//                 <span className="ml-2 text-slate-600 group-hover:text-slate-900 transition-colors font-medium text-xs sm:text-sm">
 //                   Remember me
 //                 </span>
 //               </label>
 //               <button
 //                 type="button"
-//                 className="font-bold text-blue-600 hover:text-blue-700 hover:underline text-sm"
+//                 className="font-bold text-blue-600 hover:text-blue-700 hover:underline text-xs sm:text-sm"
 //                 disabled={loading}
 //               >
 //                 Forgot password?
@@ -295,7 +294,7 @@
 //             <button
 //               type="submit"
 //               disabled={loading}
-//               className={`w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 rounded-xl font-black uppercase tracking-wider shadow-lg shadow-blue-500/30 transition-all transform active:scale-[0.98] ${
+//               className={`w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3.5 sm:py-4 rounded-xl font-black uppercase tracking-wider shadow-lg shadow-blue-500/30 transition-all transform active:scale-[0.98] text-sm sm:text-base ${
 //                 loading ? "opacity-70 cursor-not-allowed" : ""
 //               }`}
 //             >
@@ -330,7 +329,7 @@
 //           </form>
 
 //           {/* Quick Login Buttons */}
-//           <div className="mt-8">
+//           <div className="mt-6 sm:mt-8">
 //             <p className="text-xs font-black uppercase text-slate-400 mb-3 tracking-wider text-center">
 //               Quick Login
 //             </p>
@@ -338,7 +337,7 @@
 //               <button
 //                 type="button"
 //                 onClick={() => fillDemoAccount("admin")}
-//                 className="bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all border border-blue-200"
+//                 className="bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-2 sm:px-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all border border-blue-200 min-h-[44px]"
 //                 disabled={loading}
 //               >
 //                 Admin
@@ -346,7 +345,7 @@
 //               <button
 //                 type="button"
 //                 onClick={() => fillDemoAccount("store")}
-//                 className="bg-green-50 hover:bg-green-100 text-green-700 py-2 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all border border-green-200"
+//                 className="bg-green-50 hover:bg-green-100 text-green-700 py-2 px-2 sm:px-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all border border-green-200 min-h-[44px]"
 //                 disabled={loading}
 //               >
 //                 Store
@@ -354,7 +353,7 @@
 //               <button
 //                 type="button"
 //                 onClick={() => fillDemoAccount("cutting")}
-//                 className="bg-orange-50 hover:bg-orange-100 text-orange-700 py-2 px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all border border-orange-200"
+//                 className="bg-orange-50 hover:bg-orange-100 text-orange-700 py-2 px-2 sm:px-3 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all border border-orange-200 min-h-[44px]"
 //                 disabled={loading}
 //               >
 //                 Cutting
@@ -362,37 +361,34 @@
 //             </div>
 //           </div>
 
-//           {/* Demo Accounts Info */}
+//           {/* Demo Accounts Info - Collapsible on mobile */}
 //           <div className="mt-6 text-xs">
-//             <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-//               <p className="text-slate-400 font-black uppercase tracking-wider mb-2 text-[10px]">
-//                 Demo Credentials
-//               </p>
-//               <div className="space-y-2">
-//                 <div className="flex justify-between items-center text-slate-600">
-//                   <span className="font-black text-blue-600">Admin</span>
-//                   <span className="font-mono">admin@dreamfit.com</span>
+//             <details className="bg-slate-50 rounded-xl p-3 sm:p-4 border border-slate-100">
+//               <summary className="text-slate-400 font-black uppercase tracking-wider text-[10px] cursor-pointer list-none flex items-center justify-between">
+//                 <span>Demo Credentials</span>
+//                 <span className="text-blue-600 text-xs">▼</span>
+//               </summary>
+//               <div className="mt-3 space-y-2">
+//                 <div className="flex flex-col xs:flex-row xs:justify-between items-start xs:items-center text-slate-600 gap-1 xs:gap-0">
+//                   <span className="font-black text-blue-600 text-xs">Admin</span>
+//                   <span className="font-mono text-xs break-all">admin@dreamfit.com</span>
 //                 </div>
-//                 <div className="flex justify-between items-center text-slate-600">
-//                   <span className="font-black text-green-600">
-//                     Store Keeper
-//                   </span>
-//                   <span className="font-mono">store@dreamfit.com</span>
+//                 <div className="flex flex-col xs:flex-row xs:justify-between items-start xs:items-center text-slate-600 gap-1 xs:gap-0">
+//                   <span className="font-black text-green-600 text-xs">Store Keeper</span>
+//                   <span className="font-mono text-xs break-all">store@dreamfit.com</span>
 //                 </div>
-//                 <div className="flex justify-between items-center text-slate-600">
-//                   <span className="font-black text-orange-600">
-//                     Cutting Master
-//                   </span>
-//                   <span className="font-mono">cutting@dreamfit.com</span>
+//                 <div className="flex flex-col xs:flex-row xs:justify-between items-start xs:items-center text-slate-600 gap-1 xs:gap-0">
+//                   <span className="font-black text-orange-600 text-xs">Cutting Master</span>
+//                   <span className="font-mono text-xs break-all">cutting@dreamfit.com</span>
 //                 </div>
 //                 <div className="border-t border-slate-200 pt-2 mt-2">
-//                   <div className="flex justify-between items-center text-slate-500">
-//                     <span className="font-black">Password</span>
-//                     <span className="font-mono">123456</span>
+//                   <div className="flex flex-col xs:flex-row xs:justify-between items-start xs:items-center text-slate-500 gap-1 xs:gap-0">
+//                     <span className="font-black text-xs">Password</span>
+//                     <span className="font-mono text-xs">123456</span>
 //                   </div>
 //                 </div>
 //               </div>
-//             </div>
+//             </details>
 //           </div>
 
 //           <p className="mt-6 text-center text-[10px] text-slate-400 border-t border-slate-100 pt-4 font-medium">
@@ -403,6 +399,7 @@
 //     </div>
 //   );
 // }
+
 
 
 
@@ -459,19 +456,18 @@ export default function Login() {
       return;
     }
 
-    let toastId;
+    // 🚀 REMOVED: toastId variable and loading toast - using button spinner only for faster performance
 
     try {
       setLoading(true);
       dispatch(loginStart());
 
-      toastId = showToast.loading("Logging in...");
-
+      // 🚀 OPTIMIZED: Direct API call without loading toast
       const data = await loginRequest(email, password);
 
       console.log("✅ Login successful:", data);
 
-      showToast.dismiss(toastId);
+      // 🚀 OPTIMIZED: Removed showToast.dismiss call
 
       if (!data.token || !data.user) {
         throw new Error("Invalid response from server");
@@ -483,23 +479,25 @@ export default function Login() {
 
       dispatch(loginSuccess(data));
 
-      showToast.success(`Welcome back, ${data.user.name || "User"}! 🎉`);
-
+      // 🚀 OPTIMIZED: Success toast shows after redirect (faster)
       const userRole = data.user.role;
 
+      // 🚀 OPTIMIZED: Using replace: true for faster navigation (no history entry)
       if (userRole === "ADMIN") {
-        navigate("/admin/dashboard");
+        navigate("/admin/dashboard", { replace: true });
+        showToast.success(`Welcome back, ${data.user.name || "User"}! 🎉`);
       } else if (userRole === "STORE_KEEPER") {
-        navigate("/storekeeper/dashboard");
+        navigate("/storekeeper/dashboard", { replace: true });
+        showToast.success(`Welcome back, ${data.user.name || "User"}! 🎉`);
       } else if (userRole === "CUTTING_MASTER") {
-        navigate("/cuttingmaster/dashboard");
+        navigate("/cuttingmaster/dashboard", { replace: true });
+        showToast.success(`Welcome back, ${data.user.name || "User"}! 🎉`);
       } else {
         showToast.error("Unauthorized Role! ❌");
         navigate("/");
       }
     } catch (err) {
-      if (toastId) showToast.dismiss(toastId);
-
+      // 🚀 OPTIMIZED: Removed toastId check since we're not using it
       const errorMessage =
         err.response?.data?.message || err.message || "Invalid credentials ❌";
       dispatch(loginFailure(errorMessage));

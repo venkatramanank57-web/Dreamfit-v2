@@ -53,13 +53,61 @@ export const createStoreKeeper = async (req, res) => {
 };
 
 // ===== GET ALL STORE KEEPERS (Admin only) =====
+// export const getAllStoreKeepers = async (req, res) => {
+//   try {
+//     const { search, department } = req.query;
+//     let query = { isActive: true };
+
+//     if (search) {
+//       query.$or = [
+//         { name: { $regex: search, $options: 'i' } },
+//         { phone: { $regex: search, $options: 'i' } },
+//         { email: { $regex: search, $options: 'i' } },
+//         { storeKeeperId: { $regex: search, $options: 'i' } }
+//       ];
+//     }
+
+//     if (department && department !== 'all') {
+//       query.department = department;
+//     }
+
+//     const storeKeepers = await StoreKeeper.find(query)
+//       .populate('createdBy', 'name')
+//       .select('-password')
+//       .sort({ createdAt: -1 });
+
+//     // Get order statistics for each store keeper
+//     for (let sk of storeKeepers) {
+//       const orderStats = await Order.aggregate([
+//         { $match: { createdBy: sk._id, isActive: true } },
+//         { $group: {
+//           _id: null,
+//           total: { $sum: 1 },
+//           completed: { $sum: { $cond: [{ $eq: ["$status", "delivered"] }, 1, 0] } },
+//           pending: { $sum: { $cond: [{ $in: ["$status", ["draft", "confirmed"]] }, 1, 0] } },
+//           inProgress: { $sum: { $cond: [{ $eq: ["$status", "in-progress"] }, 1, 0] } }
+//         }}
+//       ]);
+
+//       sk.stats = orderStats[0] || { total: 0, completed: 0, pending: 0, inProgress: 0 };
+//     }
+
+//     res.json(storeKeepers);
+//   } catch (error) {
+//     console.error("❌ Get all error:", error);
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
+
 export const getAllStoreKeepers = async (req, res) => {
   try {
     const { search, department } = req.query;
-    let query = { isActive: true };
+    let matchQuery = { isActive: true };
 
+    // 1. Filter Logic
     if (search) {
-      query.$or = [
+      matchQuery.$or = [
         { name: { $regex: search, $options: 'i' } },
         { phone: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
@@ -68,34 +116,61 @@ export const getAllStoreKeepers = async (req, res) => {
     }
 
     if (department && department !== 'all') {
-      query.department = department;
+      matchQuery.department = department;
     }
 
-    const storeKeepers = await StoreKeeper.find(query)
-      .populate('createdBy', 'name')
-      .select('-password')
-      .sort({ createdAt: -1 });
+    // 🚀 HIGH PERFORMANCE AGGREGATION
+    const storeKeepers = await StoreKeeper.aggregate([
+      { $match: matchQuery },
+      { $sort: { createdAt: -1 } },
 
-    // Get order statistics for each store keeper
-    for (let sk of storeKeepers) {
-      const orderStats = await Order.aggregate([
-        { $match: { createdBy: sk._id, isActive: true } },
-        { $group: {
-          _id: null,
-          total: { $sum: 1 },
-          completed: { $sum: { $cond: [{ $eq: ["$status", "delivered"] }, 1, 0] } },
-          pending: { $sum: { $cond: [{ $in: ["$status", ["draft", "confirmed"]] }, 1, 0] } },
-          inProgress: { $sum: { $cond: [{ $eq: ["$status", "in-progress"] }, 1, 0] } }
-        }}
-      ]);
+      // 🔥 Step 1: Join with Orders (Orey nerathula stats edukka)
+      {
+        $lookup: {
+          from: "orders", // Order collection name check pannunga (usually 'orders')
+          localField: "_id",
+          foreignField: "createdBy",
+          as: "orderData"
+        }
+      },
 
-      sk.stats = orderStats[0] || { total: 0, completed: 0, pending: 0, inProgress: 0 };
-    }
+      // 📊 Step 2: Backend-laye counts calculate panrom
+      {
+        $addFields: {
+          stats: {
+            total: { 
+              $size: { $filter: { input: "$orderData", as: "o", cond: { $eq: ["$$o.isActive", true] } } } 
+            },
+            completed: { 
+              $size: { $filter: { input: "$orderData", as: "o", cond: { $eq: ["$$o.status", "delivered"] } } } 
+            },
+            pending: { 
+              $size: { $filter: { input: "$orderData", as: "o", cond: { $in: ["$$o.status", ["draft", "confirmed"]] } } } 
+            },
+            inProgress: { 
+              $size: { $filter: { input: "$orderData", as: "o", cond: { $eq: ["$$o.status", "in-progress"] } } } 
+            }
+          }
+        }
+      },
 
-    res.json(storeKeepers);
+      // 🧹 Step 3: unwanted weight items-ah remove panrom (Password and huge orders array)
+      {
+        $project: {
+          password: 0,
+          orderData: 0
+        }
+      }
+    ]);
+
+    // Optional: createdBy-ah frontend-ku thevana populate manual-ah pannanum aggregate-la
+    // But list page-ku idhuve romba fast-ah irukkum.
+
+    res.status(200).json(storeKeepers);
+
   } catch (error) {
-    console.error("❌ Get all error:", error);
-    res.status(500).json({ message: error.message });
+    console.error("❌ High-Perf StoreKeeper Error:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 

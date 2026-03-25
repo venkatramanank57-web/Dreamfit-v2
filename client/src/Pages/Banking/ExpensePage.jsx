@@ -66,6 +66,7 @@
 //   const [searchQuery, setSearchQuery] = useState('');
 //   const [activeView, setActiveView] = useState('all');
 //   const [isInitialLoad, setIsInitialLoad] = useState(true);
+//   const [showCustomDatePicker, setShowCustomDatePicker] = useState(false); // New state for custom date picker
 
 //   const isAdmin = user?.role === 'ADMIN';
 //   const canDelete = isAdmin;
@@ -143,30 +144,56 @@
 //     if (range === 'today') {
 //       startDate = today.toISOString().split('T')[0];
 //       endDate = endOfDay.toISOString().split('T')[0];
+//       setShowCustomDatePicker(false);
 //     } else if (range === 'week') {
 //       const weekStart = new Date(today);
 //       weekStart.setDate(today.getDate() - today.getDay());
 //       weekStart.setHours(0, 0, 0, 0);
 //       startDate = weekStart.toISOString().split('T')[0];
 //       endDate = endOfDay.toISOString().split('T')[0];
+//       setShowCustomDatePicker(false);
 //     } else if (range === 'month') {
 //       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 //       monthStart.setHours(0, 0, 0, 0);
 //       startDate = monthStart.toISOString().split('T')[0];
 //       endDate = endOfDay.toISOString().split('T')[0];
+//       setShowCustomDatePicker(false);
 //     } else if (range === 'year') {
 //       const yearStart = new Date(today.getFullYear(), 0, 1);
 //       yearStart.setHours(0, 0, 0, 0);
 //       startDate = yearStart.toISOString().split('T')[0];
 //       endDate = endOfDay.toISOString().split('T')[0];
-//     } else if (range === 'custom' && customDates.start && customDates.end) {
-//       startDate = customDates.start;
-//       endDate = customDates.end;
+//       setShowCustomDatePicker(false);
+//     } else if (range === 'custom') {
+//       setShowCustomDatePicker(true);
+//       // Only apply custom dates if both are selected
+//       if (customDates.start && customDates.end) {
+//         startDate = customDates.start;
+//         endDate = customDates.end;
+//       } else {
+//         // Don't apply filter if custom dates are not selected
+//         return;
+//       }
 //     }
 
 //     if (startDate && endDate) {
 //       dispatch(setFilters({ startDate, endDate, page: 1 }));
 //     }
+//   };
+
+//   const handleCustomDateApply = () => {
+//     if (customDates.start && customDates.end) {
+//       handleDateRangeChange('custom');
+//     } else {
+//       showToast.error('Please select both start and end dates');
+//     }
+//   };
+
+//   const handleCustomDateClear = () => {
+//     setCustomDates({ start: '', end: '' });
+//     setShowCustomDatePicker(false);
+//     setDateRange('month');
+//     handleDateRangeChange('month');
 //   };
 
 //   const handleAccountFilter = (account) => {
@@ -416,8 +443,53 @@
 //                 <option value="week">This Week</option>
 //                 <option value="month">This Month</option>
 //                 <option value="year">This Year</option>
+//                 <option value="custom">Custom Range</option>
 //               </select>
 //             </div>
+
+//             {/* Custom Date Picker for Mobile */}
+//             {dateRange === 'custom' && (
+//               <div className="mb-4 space-y-3">
+//                 <div>
+//                   <label className="block text-xs font-medium text-slate-500 mb-1">Start Date</label>
+//                   <input
+//                     type="date"
+//                     value={customDates.start}
+//                     onChange={(e) => setCustomDates({ ...customDates, start: e.target.value })}
+//                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+//                   />
+//                 </div>
+//                 <div>
+//                   <label className="block text-xs font-medium text-slate-500 mb-1">End Date</label>
+//                   <input
+//                     type="date"
+//                     value={customDates.end}
+//                     onChange={(e) => setCustomDates({ ...customDates, end: e.target.value })}
+//                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+//                   />
+//                 </div>
+//                 <div className="flex gap-2">
+//                   <button
+//                     onClick={() => {
+//                       handleCustomDateApply();
+//                       setMobileFiltersOpen(false);
+//                     }}
+//                     className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700"
+//                   >
+//                     Apply
+//                   </button>
+//                   <button
+//                     onClick={() => {
+//                       handleCustomDateClear();
+//                       setMobileFiltersOpen(false);
+//                     }}
+//                     className="flex-1 px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-200"
+//                   >
+//                     Clear
+//                   </button>
+//                 </div>
+//               </div>
+//             )}
 
 //             {/* Clear Filters */}
 //             <button
@@ -427,6 +499,8 @@
 //                 setActiveView('all');
 //                 setDateRange('month');
 //                 setSearchQuery('');
+//                 setCustomDates({ start: '', end: '' });
+//                 setShowCustomDatePicker(false);
 //                 setMobileFiltersOpen(false);
 //               }}
 //               className="w-full px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-200 transition-all"
@@ -763,11 +837,52 @@
 //                       setDateRange('month');
 //                       setSearchQuery('');
 //                       setCustomDates({ start: '', end: '' });
+//                       setShowCustomDatePicker(false);
 //                     }}
 //                     className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg font-medium hover:bg-slate-200 transition-all flex items-center gap-2"
 //                   >
 //                     <X size={16} />
 //                     Clear Filters
+//                   </button>
+//                 </div>
+//               </div>
+//             </div>
+//           )}
+
+//           {/* Custom Date Picker - Desktop */}
+//           {dateRange === 'custom' && (
+//             <div className="mt-4 pt-4 border-t border-slate-100">
+//               <div className="flex flex-wrap gap-4 items-end">
+//                 <div>
+//                   <label className="block text-xs font-medium text-slate-500 mb-2">Start Date</label>
+//                   <input
+//                     type="date"
+//                     value={customDates.start}
+//                     onChange={(e) => setCustomDates({ ...customDates, start: e.target.value })}
+//                     className="px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+//                   />
+//                 </div>
+//                 <div>
+//                   <label className="block text-xs font-medium text-slate-500 mb-2">End Date</label>
+//                   <input
+//                     type="date"
+//                     value={customDates.end}
+//                     onChange={(e) => setCustomDates({ ...customDates, end: e.target.value })}
+//                     className="px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+//                   />
+//                 </div>
+//                 <div className="flex gap-2">
+//                   <button
+//                     onClick={handleCustomDateApply}
+//                     className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-all"
+//                   >
+//                     Apply Range
+//                   </button>
+//                   <button
+//                     onClick={handleCustomDateClear}
+//                     className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg font-medium hover:bg-slate-200 transition-all"
+//                   >
+//                     Clear
 //                   </button>
 //                 </div>
 //               </div>
@@ -1099,7 +1214,14 @@
 // }
 
 
-// Pages/banking/ExpensePage.jsx - FULLY RESPONSIVE with Role-Based Navigation
+
+
+
+
+
+
+
+// Pages/banking/ExpensePage.jsx - COMPLETE WITH FULL-WIDTH TABLE FIX
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -1148,7 +1270,7 @@ export default function ExpensePage() {
   const loading = useSelector(selectTransactionLoading);
   const { user } = useSelector((state) => state.auth);
 
-  // ✅ Get base path based on user role
+  // Get base path based on user role
   const basePath = user?.role === "ADMIN" ? "/admin" : 
                    user?.role === "STORE_KEEPER" ? "/storekeeper" : 
                    "/cuttingmaster";
@@ -1167,7 +1289,7 @@ export default function ExpensePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeView, setActiveView] = useState('all');
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false); // New state for custom date picker
+  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
 
   const isAdmin = user?.role === 'ADMIN';
   const canDelete = isAdmin;
@@ -1267,12 +1389,10 @@ export default function ExpensePage() {
       setShowCustomDatePicker(false);
     } else if (range === 'custom') {
       setShowCustomDatePicker(true);
-      // Only apply custom dates if both are selected
       if (customDates.start && customDates.end) {
         startDate = customDates.start;
         endDate = customDates.end;
       } else {
-        // Don't apply filter if custom dates are not selected
         return;
       }
     }
@@ -1322,7 +1442,7 @@ export default function ExpensePage() {
 
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
-    // Implement search logic if needed
+    // Filter logic can be added here if needed
   };
 
   const handlePageChange = (newPage) => {
@@ -1394,16 +1514,13 @@ export default function ExpensePage() {
     return methods[method] || method;
   };
 
-  // Safe formatting function
   const safeToLocale = (value) => {
     return (value || 0).toLocaleString('en-IN');
   };
 
-  // Calculate pagination display values
   const startEntry = pagination.total > 0 ? ((pagination.page - 1) * pagination.limit) + 1 : 0;
   const endEntry = Math.min(pagination.page * pagination.limit, pagination.total);
 
-  // Generate page numbers for pagination
   const getPageNumbers = () => {
     const totalPages = pagination.pages;
     const currentPage = pagination.page;
@@ -1471,19 +1588,17 @@ export default function ExpensePage() {
 
         {/* Mobile Filters Dropdown */}
         {mobileFiltersOpen && (
-          <div className="absolute top-full left-4 right-4 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 p-4 z-40 animate-in slide-in-from-top-2 duration-200">
+          <div className="absolute top-full left-4 right-4 mt-2 bg-white rounded-xl shadow-xl border border-slate-200 p-4 z-40">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-slate-800">Filters</h3>
               <button
                 onClick={() => setMobileFiltersOpen(false)}
-                className="p-1 hover:bg-slate-100 rounded-lg flex items-center justify-center"
-                style={{ minWidth: '28px', minHeight: '28px' }}
+                className="p-1 hover:bg-slate-100 rounded-lg"
               >
-                <X size={18} className="text-slate-500" />
+                <X size={18} />
               </button>
             </div>
             
-            {/* Account Type Filter */}
             <div className="mb-4">
               <label className="block text-xs font-medium text-slate-500 mb-2">Account Type</label>
               <div className="flex gap-2">
@@ -1529,7 +1644,6 @@ export default function ExpensePage() {
               </div>
             </div>
 
-            {/* Date Range */}
             <div className="mb-4">
               <label className="block text-xs font-medium text-slate-500 mb-2">Date Range</label>
               <select
@@ -1548,7 +1662,6 @@ export default function ExpensePage() {
               </select>
             </div>
 
-            {/* Custom Date Picker for Mobile */}
             {dateRange === 'custom' && (
               <div className="mb-4 space-y-3">
                 <div>
@@ -1571,20 +1684,14 @@ export default function ExpensePage() {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => {
-                      handleCustomDateApply();
-                      setMobileFiltersOpen(false);
-                    }}
-                    className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700"
+                    onClick={handleCustomDateApply}
+                    className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium"
                   >
                     Apply
                   </button>
                   <button
-                    onClick={() => {
-                      handleCustomDateClear();
-                      setMobileFiltersOpen(false);
-                    }}
-                    className="flex-1 px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-200"
+                    onClick={handleCustomDateClear}
+                    className="flex-1 px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium"
                   >
                     Clear
                   </button>
@@ -1592,7 +1699,6 @@ export default function ExpensePage() {
               </div>
             )}
 
-            {/* Clear Filters */}
             <button
               onClick={() => {
                 dispatch(resetFilters());
@@ -1601,7 +1707,6 @@ export default function ExpensePage() {
                 setDateRange('month');
                 setSearchQuery('');
                 setCustomDates({ start: '', end: '' });
-                setShowCustomDatePicker(false);
                 setMobileFiltersOpen(false);
               }}
               className="w-full px-3 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium hover:bg-slate-200 transition-all"
@@ -1611,9 +1716,9 @@ export default function ExpensePage() {
           </div>
         )}
 
-        {/* ✅ FIXED: Mobile Menu with Role-Based Navigation */}
+        {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="absolute top-full left-0 right-0 bg-white border-b border-slate-200 shadow-lg p-4 z-40 animate-in slide-in-from-top-2 duration-200">
+          <div className="absolute top-full left-0 right-0 bg-white border-b border-slate-200 shadow-lg p-4 z-40">
             <div className="space-y-2">
               <button
                 onClick={() => {
@@ -1657,7 +1762,7 @@ export default function ExpensePage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-        {/* ✅ FIXED: Desktop Header with Role-Based Links */}
+        {/* Desktop Header */}
         <div className="hidden lg:block mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
@@ -1715,92 +1820,89 @@ export default function ExpensePage() {
           </button>
         </div>
 
-        {/* Summary Cards - Fully Responsive */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
-          {/* Total Expense Card */}
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           <div 
             onClick={() => handleCardClick('all')}
-            className={`bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 lg:p-6 shadow-sm border-l-4 border-red-500 cursor-pointer transform transition-all hover:scale-105 hover:shadow-md ${
+            className={`bg-white rounded-xl p-5 shadow-sm border-l-4 border-red-500 cursor-pointer transform transition-all hover:scale-105 hover:shadow-md ${
               activeView === 'all' ? 'ring-2 ring-red-500 ring-offset-2' : ''
             }`}
           >
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] sm:text-xs text-slate-500">Total Expense</p>
-                <p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-black text-red-600 break-words">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-xs text-slate-500 uppercase tracking-wider">Total Expense</p>
+                <p className="text-2xl font-black text-red-600">
                   ₹{safeToLocale(totalExpense)}
                 </p>
               </div>
-              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-red-100 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ml-2">
-                <TrendingDown size={14} className="text-red-600 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+              <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+                <TrendingDown size={20} className="text-red-600" />
               </div>
             </div>
             <div className="flex justify-between items-center">
-              <p className="text-[8px] sm:text-xs text-slate-400">Total: {pagination.total || transactions.length} transactions</p>
-              <span className="text-[8px] sm:text-xs font-medium text-red-600">
+              <p className="text-xs text-slate-400">Total: {pagination.total || transactions.length} transactions</p>
+              <span className="text-xs font-medium text-red-600">
                 {activeView === 'all' ? 'Viewing' : 'View'}
               </span>
             </div>
           </div>
 
-          {/* Hand Cash Expense Card */}
           <div 
             onClick={() => handleCardClick('hand-cash')}
-            className={`bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 lg:p-6 shadow-sm border-l-4 border-orange-500 cursor-pointer transform transition-all hover:scale-105 hover:shadow-md ${
+            className={`bg-white rounded-xl p-5 shadow-sm border-l-4 border-orange-500 cursor-pointer transform transition-all hover:scale-105 hover:shadow-md ${
               activeView === 'hand-cash' ? 'ring-2 ring-orange-500 ring-offset-2' : ''
             }`}
           >
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] sm:text-xs text-slate-500">Hand Cash Expense</p>
-                <p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-black text-orange-600 break-words">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-xs text-slate-500 uppercase tracking-wider">Hand Cash Expense</p>
+                <p className="text-2xl font-black text-orange-600">
                   ₹{safeToLocale(handCashTotal)}
                 </p>
               </div>
-              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-orange-100 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ml-2">
-                <Wallet size={14} className="text-orange-600 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+              <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+                <Wallet size={20} className="text-orange-600" />
               </div>
             </div>
             <div className="flex justify-between items-center">
-              <p className="text-[8px] sm:text-xs text-slate-400">
+              <p className="text-xs text-slate-400">
                 {transactions.filter(t => t.accountType === 'hand-cash').length} transactions
               </p>
-              <span className="text-[8px] sm:text-xs font-medium text-orange-600">
+              <span className="text-xs font-medium text-orange-600">
                 {activeView === 'hand-cash' ? 'Viewing' : 'View'}
               </span>
             </div>
           </div>
 
-          {/* Bank Expense Card */}
           <div 
             onClick={() => handleCardClick('bank')}
-            className={`bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 lg:p-6 shadow-sm border-l-4 border-blue-500 cursor-pointer transform transition-all hover:scale-105 hover:shadow-md ${
+            className={`bg-white rounded-xl p-5 shadow-sm border-l-4 border-blue-500 cursor-pointer transform transition-all hover:scale-105 hover:shadow-md ${
               activeView === 'bank' ? 'ring-2 ring-blue-500 ring-offset-2' : ''
             }`}
           >
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] sm:text-xs text-slate-500">Bank Expense</p>
-                <p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-black text-blue-600 break-words">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-xs text-slate-500 uppercase tracking-wider">Bank Expense</p>
+                <p className="text-2xl font-black text-blue-600">
                   ₹{safeToLocale(bankTotal)}
                 </p>
               </div>
-              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ml-2">
-                <Landmark size={14} className="text-blue-600 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Landmark size={20} className="text-blue-600" />
               </div>
             </div>
             <div className="flex justify-between items-center">
-              <p className="text-[8px] sm:text-xs text-slate-400">
+              <p className="text-xs text-slate-400">
                 {transactions.filter(t => t.accountType === 'bank').length} transactions
               </p>
-              <span className="text-[8px] sm:text-xs font-medium text-blue-600">
+              <span className="text-xs font-medium text-blue-600">
                 {activeView === 'bank' ? 'Viewing' : 'View'}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Active View Indicator - Mobile/Desktop */}
+        {/* Active View Indicator */}
         <div className="mb-4 flex items-center gap-2">
           <span className="text-xs sm:text-sm font-medium text-slate-600">Showing:</span>
           <span className={`px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium ${
@@ -1815,10 +1917,9 @@ export default function ExpensePage() {
           </span>
         </div>
 
-        {/* Desktop Filters Bar - Hidden on Mobile */}
+        {/* Desktop Filters Bar */}
         <div className="hidden lg:block bg-white rounded-xl p-4 mb-6 shadow-sm">
           <div className="flex flex-wrap gap-4 items-center justify-between">
-            {/* Account Type Tabs */}
             <div className="flex gap-2 bg-slate-100 p-1 rounded-lg">
               <button
                 onClick={() => handleAccountFilter('all')}
@@ -1854,12 +1955,11 @@ export default function ExpensePage() {
               </button>
             </div>
 
-            {/* Date Range and Search */}
             <div className="flex gap-3">
               <select
                 value={dateRange}
                 onChange={(e) => handleDateRangeChange(e.target.value)}
-                className="px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                className="px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
               >
                 <option value="today">Today</option>
                 <option value="week">This Week</option>
@@ -1875,7 +1975,7 @@ export default function ExpensePage() {
                   value={searchQuery}
                   onChange={handleSearch}
                   placeholder="Search by description..."
-                  className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-64"
+                  className="pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-64 text-sm"
                 />
               </div>
 
@@ -1892,7 +1992,6 @@ export default function ExpensePage() {
             </div>
           </div>
 
-          {/* Advanced Filters */}
           {showFilters && (
             <div className="mt-4 pt-4 border-t border-slate-100">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1901,7 +2000,7 @@ export default function ExpensePage() {
                   <select
                     value={filters.category || ''}
                     onChange={(e) => dispatch(setFilters({ category: e.target.value, page: 1 }))}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                   >
                     <option value="">All Categories</option>
                     <option value="salary">Employee Salary</option>
@@ -1919,7 +2018,7 @@ export default function ExpensePage() {
                   <select
                     value={filters.paymentMethod || ''}
                     onChange={(e) => dispatch(setFilters({ paymentMethod: e.target.value, page: 1 }))}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                   >
                     <option value="">All Methods</option>
                     <option value="cash">Cash</option>
@@ -1938,7 +2037,6 @@ export default function ExpensePage() {
                       setDateRange('month');
                       setSearchQuery('');
                       setCustomDates({ start: '', end: '' });
-                      setShowCustomDatePicker(false);
                     }}
                     className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg font-medium hover:bg-slate-200 transition-all flex items-center gap-2"
                   >
@@ -1950,7 +2048,6 @@ export default function ExpensePage() {
             </div>
           )}
 
-          {/* Custom Date Picker - Desktop */}
           {dateRange === 'custom' && (
             <div className="mt-4 pt-4 border-t border-slate-100">
               <div className="flex flex-wrap gap-4 items-end">
@@ -1960,7 +2057,7 @@ export default function ExpensePage() {
                     type="date"
                     value={customDates.start}
                     onChange={(e) => setCustomDates({ ...customDates, start: e.target.value })}
-                    className="px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                   />
                 </div>
                 <div>
@@ -1969,7 +2066,7 @@ export default function ExpensePage() {
                     type="date"
                     value={customDates.end}
                     onChange={(e) => setCustomDates({ ...customDates, end: e.target.value })}
-                    className="px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                   />
                 </div>
                 <div className="flex gap-2">
@@ -2007,74 +2104,74 @@ export default function ExpensePage() {
 
         {/* Loading State */}
         {loading && transactions.length === 0 && (
-          <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-8 sm:p-12 text-center">
+          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
             <div className="flex flex-col items-center">
-              <RefreshCw size={32} className="text-slate-300 animate-spin mb-3 sm:w-12 sm:h-12" />
-              <p className="text-sm sm:text-base text-slate-500 font-medium">Loading transactions...</p>
+              <RefreshCw size={32} className="text-slate-300 animate-spin mb-3" />
+              <p className="text-sm text-slate-500 font-medium">Loading transactions...</p>
             </div>
           </div>
         )}
 
-        {/* Expense Table - Desktop */}
+        {/* ✅ FIXED: FULL-WIDTH DESKTOP TABLE */}
         {!loading && (
-          <div className="hidden lg:block bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
+          <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="overflow-x-auto overflow-y-hidden">
+              <table className="w-full min-w-[1000px] border-collapse">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 uppercase">Date & Time</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 uppercase">Category</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 uppercase">Description</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 uppercase">Payment Method</th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-slate-500 uppercase">Account</th>
-                    <th className="px-6 py-4 text-right text-xs font-medium text-slate-500 uppercase">Amount</th>
-                    <th className="px-6 py-4 text-center text-xs font-medium text-slate-500 uppercase">Actions</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">Date & Time</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">Category</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">Description</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">Payment Method</th>
+                    <th className="px-6 py-4 text-left text-xs font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">Account</th>
+                    <th className="px-6 py-4 text-right text-xs font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">Amount</th>
+                    <th className="px-6 py-4 text-center text-xs font-black text-slate-500 uppercase tracking-wider whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {displayedTransactions.map((transaction) => (
-                    <tr key={transaction._id} className="hover:bg-slate-50 transition-all">
-                      <td className="px-6 py-4">
-                        <div>
-                          <div className="text-sm font-medium text-slate-800">{formatDate(transaction.transactionDate)}</div>
-                          <div className="text-xs text-slate-500">{formatTime(transaction.transactionDate)}</div>
-                        </div>
+                    <tr key={transaction._id} className="hover:bg-slate-50/80 transition-all">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-bold text-slate-800">{formatDate(transaction.transactionDate)}</div>
+                        <div className="text-[10px] text-slate-400 font-medium">{formatTime(transaction.transactionDate)}</div>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="text-sm text-slate-800">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm font-semibold text-slate-700">
                           {getCategoryLabel(transaction.category, transaction.customCategory)}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="text-sm text-slate-600">{transaction.description || '—'}</span>
+                      <td className="px-6 py-4 max-w-xs">
+                        <div className="text-sm text-slate-600 truncate" title={transaction.description}>
+                          {transaction.description || '—'}
+                        </div>
                         {transaction.referenceNumber && (
-                          <div className="text-xs text-slate-500">Ref: {transaction.referenceNumber}</div>
+                          <div className="text-[10px] text-blue-500 mt-0.5 font-mono">Ref: {transaction.referenceNumber}</div>
                         )}
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="text-sm text-slate-800">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-slate-600 font-medium">
                           {getPaymentMethodLabel(transaction.paymentMethod)}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
                           transaction.accountType === 'hand-cash'
-                            ? 'bg-orange-100 text-orange-700'
-                            : 'bg-blue-100 text-blue-700'
+                            ? 'bg-orange-100 text-orange-700 border border-orange-200'
+                            : 'bg-blue-100 text-blue-700 border border-blue-200'
                         }`}>
-                          {transaction.accountType === 'hand-cash' ? 'Hand Cash' : 'Bank'}
+                          {transaction.accountType === 'hand-cash' ? 'Cash' : 'Bank'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <span className="text-lg font-bold text-red-600">
+                      <td className="px-6 py-4 text-right whitespace-nowrap">
+                        <span className="text-base font-black text-red-600">
                           - ₹{safeToLocale(transaction.amount)}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => handleViewDetails(transaction)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all flex items-center justify-center"
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
                             title="View Details"
                           >
                             <Eye size={18} />
@@ -2082,7 +2179,7 @@ export default function ExpensePage() {
                           {canDelete && (
                             <button
                               onClick={() => handleDelete(transaction._id)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all flex items-center justify-center"
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
                               title="Delete"
                             >
                               <Trash2 size={18} />
@@ -2171,13 +2268,12 @@ export default function ExpensePage() {
           </div>
         )}
 
-        {/* Expense Cards - Mobile View */}
+        {/* Mobile Cards View */}
         {!loading && (
           <div className="lg:hidden space-y-3">
             {displayedTransactions.length > 0 ? (
               displayedTransactions.map((transaction) => (
-                <div key={transaction._id} className="bg-white rounded-lg p-4 shadow-sm border border-slate-200 hover:shadow-md transition-all">
-                  {/* Header with Amount and Actions */}
+                <div key={transaction._id} className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <span className="text-lg font-bold text-red-600">
@@ -2196,14 +2292,14 @@ export default function ExpensePage() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleViewDetails(transaction)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
                       >
                         <Eye size={16} />
                       </button>
                       {canDelete && (
                         <button
                           onClick={() => handleDelete(transaction._id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -2211,13 +2307,11 @@ export default function ExpensePage() {
                     </div>
                   </div>
 
-                  {/* Date and Time */}
                   <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
                     <Clock size={12} />
                     <span>{formatDate(transaction.transactionDate)} at {formatTime(transaction.transactionDate)}</span>
                   </div>
 
-                  {/* Category and Description */}
                   <div className="bg-slate-50 p-2 rounded-lg mb-2">
                     <p className="text-xs font-medium text-slate-800">
                       {getCategoryLabel(transaction.category, transaction.customCategory)}
@@ -2230,7 +2324,6 @@ export default function ExpensePage() {
                     )}
                   </div>
 
-                  {/* Payment Method */}
                   <div className="text-[10px] text-slate-500">
                     Payment: {getPaymentMethodLabel(transaction.paymentMethod)}
                   </div>
@@ -2241,15 +2334,11 @@ export default function ExpensePage() {
                 <TrendingDown size={32} className="text-slate-300 mx-auto mb-3" />
                 <p className="text-slate-500 font-medium text-sm">No expense transactions found</p>
                 <p className="text-xs text-slate-400 mt-1 mb-4">
-                  {activeView === 'all' 
-                    ? 'Add your first expense'
-                    : activeView === 'hand-cash'
-                    ? 'No hand cash expenses'
-                    : 'No bank expenses'}
+                  Add your first expense to get started
                 </p>
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="inline-block px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 transition-all"
+                  className="inline-block px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700"
                 >
                   Add Expense
                 </button>
