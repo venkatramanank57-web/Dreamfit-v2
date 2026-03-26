@@ -4322,103 +4322,240 @@ export default function NewOrder() {
   }, [payments]);
 
   // 🔥 Handle Save Payment - Works for both new and existing orders
-  const handleSavePayment = useCallback((paymentData) => {
-    console.log("%c💾💾💾 SAVE PAYMENT CALLED 💾💾💾", "background: purple; color: white; font-size: 14px");
-    console.log("📦 Payment data received:", JSON.parse(JSON.stringify(paymentData)));
-    console.log("📦 Current Order ID:", currentOrderId);
-    console.log("📦 Is New Order?", currentOrderId === "temp");
+  // const handleSavePayment = useCallback((paymentData) => {
+  //   console.log("%c💾💾💾 SAVE PAYMENT CALLED 💾💾💾", "background: purple; color: white; font-size: 14px");
+  //   console.log("📦 Payment data received:", JSON.parse(JSON.stringify(paymentData)));
+  //   console.log("📦 Current Order ID:", currentOrderId);
+  //   console.log("📦 Is New Order?", currentOrderId === "temp");
     
-    // 🔥 CRITICAL: Check if amount is valid
-    console.log("💰 Amount in paymentData:", paymentData.amount);
-    console.log("💰 Amount type:", typeof paymentData.amount);
-    console.log("💰 Is NaN:", isNaN(paymentData.amount));
+  //   // 🔥 CRITICAL: Check if amount is valid
+  //   console.log("💰 Amount in paymentData:", paymentData.amount);
+  //   console.log("💰 Amount type:", typeof paymentData.amount);
+  //   console.log("💰 Is NaN:", isNaN(paymentData.amount));
     
-    // Map type
-    let backendType = paymentData.type || 'advance';
-    if (backendType === 'partial') {
-      backendType = 'part-payment';
-    } else if (backendType === 'full') {
-      backendType = 'final-settlement';
-    }
+  //   // Map type
+  //   let backendType = paymentData.type || 'advance';
+  //   if (backendType === 'partial') {
+  //     backendType = 'part-payment';
+  //   } else if (backendType === 'full') {
+  //     backendType = 'final-settlement';
+  //   }
     
-    const paymentWithMappedType = {
-      ...paymentData,
-      type: backendType,
-      date: paymentData.paymentDate || paymentData.date || new Date().toISOString().split('T')[0],
-      time: paymentData.paymentTime || paymentData.time || new Date().toLocaleTimeString('en-US', { hour12: false })
-    };
+  //   const paymentWithMappedType = {
+  //     ...paymentData,
+  //     type: backendType,
+  //     date: paymentData.paymentDate || paymentData.date || new Date().toISOString().split('T')[0],
+  //     time: paymentData.paymentTime || paymentData.time || new Date().toLocaleTimeString('en-US', { hour12: false })
+  //   };
     
-    console.log("📦 Payment with mapped type:", JSON.parse(JSON.stringify(paymentWithMappedType)));
+  //   console.log("📦 Payment with mapped type:", JSON.parse(JSON.stringify(paymentWithMappedType)));
     
-    // 🔥 NEW: Check if this is a new order (before creation) or existing order (after creation)
-    if (currentOrderId === "temp") {
-      // NEW ORDER - Store in local state
-      console.log("📝 New order - storing payment locally");
+  //   // 🔥 NEW: Check if this is a new order (before creation) or existing order (after creation)
+  //   if (currentOrderId === "temp") {
+  //     // NEW ORDER - Store in local state
+  //     console.log("📝 New order - storing payment locally");
       
-      if (editingPayment) {
-        console.log("✏️ Updating existing payment, tempId:", editingPayment.tempId);
-        const index = payments.findIndex(p => p.tempId === editingPayment.tempId);
-        console.log("Found at index:", index);
+  //     if (editingPayment) {
+  //       console.log("✏️ Updating existing payment, tempId:", editingPayment.tempId);
+  //       const index = payments.findIndex(p => p.tempId === editingPayment.tempId);
+  //       console.log("Found at index:", index);
         
-        if (index !== -1) {
-          const newPayments = [...payments];
-          newPayments[index] = { 
-            ...paymentWithMappedType, 
-            tempId: editingPayment.tempId
-          };
-          setPayments(newPayments);
-          console.log("✅ Payment updated, new payments array:", newPayments);
-          showToast.success("Payment updated");
-        }
-      } else {
-        const newPayment = {
-          ...paymentWithMappedType,
-          tempId: Date.now() + Math.random()
+  //       if (index !== -1) {
+  //         const newPayments = [...payments];
+  //         newPayments[index] = { 
+  //           ...paymentWithMappedType, 
+  //           tempId: editingPayment.tempId
+  //         };
+  //         setPayments(newPayments);
+  //         console.log("✅ Payment updated, new payments array:", newPayments);
+  //         showToast.success("Payment updated");
+  //       }
+  //     } else {
+  //       const newPayment = {
+  //         ...paymentWithMappedType,
+  //         tempId: Date.now() + Math.random()
+  //       };
+  //       console.log("➕ Adding new payment with tempId:", newPayment.tempId);
+  //       setPayments(prev => {
+  //         const updated = [...prev, newPayment];
+  //         console.log("✅ Payment added, new payments array:", updated);
+  //         return updated;
+  //       });
+  //       showToast.success("Payment added");
+  //     }
+  //   } else {
+  //     // EXISTING ORDER - Call API directly
+  //     console.log("📡 Existing order - calling API to add payment");
+      
+  //     // Show loading toast
+  //     const toastId = showToast.loading("Adding payment...");
+      
+  //     // Call API to add payment (you need to implement this in Redux)
+  //     dispatch(addPaymentToOrder({
+  //       orderId: currentOrderId,
+  //       paymentData: {
+  //         amount: paymentData.amount,
+  //         type: paymentData.type,
+  //         method: paymentData.method,
+  //         referenceNumber: paymentData.referenceNumber,
+  //         paymentDate: paymentData.paymentDate,
+  //         paymentTime: paymentData.paymentTime,
+  //         notes: paymentData.notes
+  //       }
+  //     })).then((result) => {
+  //       console.log("✅ Payment added via API:", result);
+  //       showToast.dismiss(toastId);
+  //       showToast.success("Payment added successfully!");
+        
+  //       // Refresh order data to show updated payments
+  //       dispatch(fetchOrderById(currentOrderId));
+  //     }).catch((error) => {
+  //       console.error("❌ Error adding payment:", error);
+  //       showToast.dismiss(toastId);
+  //       showToast.error(error.response?.data?.message || "Failed to add payment");
+  //     });
+  //   }
+    
+  //   setShowPaymentModal(false);
+  //   setEditingPayment(null);
+  // }, [payments, editingPayment, currentOrderId, dispatch]);
+
+
+  // 🔥 FIXED: Handle Save Payment - With correct time handling
+const handleSavePayment = useCallback((paymentData) => {
+  console.log("%c💾💾💾 SAVE PAYMENT CALLED 💾💾💾", "background: purple; color: white; font-size: 14px");
+  console.log("📦 Payment data received:", JSON.parse(JSON.stringify(paymentData)));
+  console.log("📦 Current Order ID:", currentOrderId);
+  console.log("📦 Is New Order?", currentOrderId === "temp");
+  
+  // 🔥 CRITICAL: Check if amount is valid
+  console.log("💰 Amount in paymentData:", paymentData.amount);
+  console.log("💰 Amount type:", typeof paymentData.amount);
+  
+  // Map type
+  let backendType = paymentData.type || 'advance';
+  if (backendType === 'partial') {
+    backendType = 'part-payment';
+  } else if (backendType === 'full') {
+    backendType = 'final-settlement';
+  }
+  
+  // ✅ FIXED: Get current time for the payment
+  const now = new Date();
+  
+  // Get selected payment date or use today
+  let paymentDateObj;
+  if (paymentData.paymentDate) {
+    paymentDateObj = new Date(paymentData.paymentDate);
+  } else {
+    paymentDateObj = new Date();
+  }
+  
+  // ✅ Merge: Selected date + current time
+  paymentDateObj.setHours(now.getHours());
+  paymentDateObj.setMinutes(now.getMinutes());
+  paymentDateObj.setSeconds(now.getSeconds());
+  paymentDateObj.setMilliseconds(now.getMilliseconds());
+  
+  // Format date as YYYY-MM-DD for display
+  const formattedDate = paymentDateObj.toISOString().split('T')[0];
+  const formattedTime = paymentDateObj.toLocaleTimeString('en-IN', { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: true 
+  });
+  
+  console.log("📅 Payment timestamp:", {
+    originalDate: paymentData.paymentDate,
+    currentTime: now.toLocaleTimeString(),
+    finalDateTime: paymentDateObj.toISOString(),
+    displayDate: formattedDate,
+    displayTime: formattedTime
+  });
+  
+  const paymentWithMappedType = {
+    ...paymentData,
+    type: backendType,
+    date: formattedDate,  // YYYY-MM-DD for display
+    time: formattedTime,   // HH:MM AM/PM for display
+    fullTimestamp: paymentDateObj.toISOString() // ✅ Full timestamp for backend
+  };
+  
+  console.log("📦 Payment with mapped type:", JSON.parse(JSON.stringify(paymentWithMappedType)));
+  
+  // 🔥 NEW: Check if this is a new order (before creation) or existing order (after creation)
+  if (currentOrderId === "temp") {
+    // NEW ORDER - Store in local state
+    console.log("📝 New order - storing payment locally");
+    
+    if (editingPayment) {
+      console.log("✏️ Updating existing payment, tempId:", editingPayment.tempId);
+      const index = payments.findIndex(p => p.tempId === editingPayment.tempId);
+      console.log("Found at index:", index);
+      
+      if (index !== -1) {
+        const newPayments = [...payments];
+        newPayments[index] = { 
+          ...paymentWithMappedType, 
+          tempId: editingPayment.tempId
         };
-        console.log("➕ Adding new payment with tempId:", newPayment.tempId);
-        setPayments(prev => {
-          const updated = [...prev, newPayment];
-          console.log("✅ Payment added, new payments array:", updated);
-          return updated;
-        });
-        showToast.success("Payment added");
+        setPayments(newPayments);
+        console.log("✅ Payment updated, new payments array:", newPayments);
+        showToast.success("Payment updated");
       }
     } else {
-      // EXISTING ORDER - Call API directly
-      console.log("📡 Existing order - calling API to add payment");
-      
-      // Show loading toast
-      const toastId = showToast.loading("Adding payment...");
-      
-      // Call API to add payment (you need to implement this in Redux)
-      dispatch(addPaymentToOrder({
-        orderId: currentOrderId,
-        paymentData: {
-          amount: paymentData.amount,
-          type: paymentData.type,
-          method: paymentData.method,
-          referenceNumber: paymentData.referenceNumber,
-          paymentDate: paymentData.paymentDate,
-          paymentTime: paymentData.paymentTime,
-          notes: paymentData.notes
-        }
-      })).then((result) => {
-        console.log("✅ Payment added via API:", result);
-        showToast.dismiss(toastId);
-        showToast.success("Payment added successfully!");
-        
-        // Refresh order data to show updated payments
-        dispatch(fetchOrderById(currentOrderId));
-      }).catch((error) => {
-        console.error("❌ Error adding payment:", error);
-        showToast.dismiss(toastId);
-        showToast.error(error.response?.data?.message || "Failed to add payment");
+      const newPayment = {
+        ...paymentWithMappedType,
+        tempId: Date.now() + Math.random()
+      };
+      console.log("➕ Adding new payment with tempId:", newPayment.tempId);
+      setPayments(prev => {
+        const updated = [...prev, newPayment];
+        console.log("✅ Payment added, new payments array:", updated);
+        return updated;
       });
+      showToast.success("Payment added");
     }
+  } else {
+    // EXISTING ORDER - Call API directly
+    console.log("📡 Existing order - calling API to add payment");
     
-    setShowPaymentModal(false);
-    setEditingPayment(null);
-  }, [payments, editingPayment, currentOrderId, dispatch]);
+    // Show loading toast
+    const toastId = showToast.loading("Adding payment...");
+    
+    // ✅ FIXED: Send full timestamp to API
+    const paymentPayload = {
+      amount: paymentData.amount,
+      type: paymentData.type,
+      method: paymentData.method,
+      referenceNumber: paymentData.referenceNumber,
+      paymentDate: paymentDateObj.toISOString(), // ✅ Send full ISO string with time
+      notes: paymentData.notes
+    };
+    
+    console.log("📤 Payment payload:", paymentPayload);
+    
+    // Call API to add payment (you need to implement this in Redux)
+    dispatch(addPaymentToOrder({
+      orderId: currentOrderId,
+      paymentData: paymentPayload
+    })).then((result) => {
+      console.log("✅ Payment added via API:", result);
+      showToast.dismiss(toastId);
+      showToast.success("Payment added successfully!");
+      
+      // Refresh order data to show updated payments
+      dispatch(fetchOrderById(currentOrderId));
+    }).catch((error) => {
+      console.error("❌ Error adding payment:", error);
+      showToast.dismiss(toastId);
+      showToast.error(error.response?.data?.message || "Failed to add payment");
+    });
+  }
+  
+  setShowPaymentModal(false);
+  setEditingPayment(null);
+}, [payments, editingPayment, currentOrderId, dispatch]);
 
   // 👕 GARMENT HANDLERS
   const handleAddGarment = useCallback(() => {

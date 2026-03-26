@@ -242,6 +242,25 @@
 //   return response.data;
 // };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // features/transaction/transactionApi.js - COMPLETE UPDATED VERSION
 import API from "../../app/axios";
 
@@ -260,6 +279,14 @@ export const getTransactions = async (filters = {}) => {
   });
 
   const response = await API.get(`/transactions?${queryParams}`);
+  return response.data;
+};
+
+export const getTodayTransactions = async () => {
+  // Use the working summary endpoint with period=today
+  const response = await API.get('/transactions/summary', { 
+    params: { period: 'today' } 
+  });
   return response.data;
 };
 
@@ -381,6 +408,8 @@ export const exportTransactions = async (filters = {}) => {
 // ✅ AUTO-INCOME APIs
 // ============================================
 
+
+
 // Get all auto incomes
 export const getAutoIncomes = async (filters = {}) => {
   const queryParams = new URLSearchParams();
@@ -457,8 +486,9 @@ export const getDashboardData = async () => {
   return response.data;
 };
 
-// ✅ NEW: Get today's transactions
-export const getTodayTransactions = async () => {
-  const response = await API.get('/transactions/today');
-  return response.data;
-};
+// // ✅ NEW: Get today's transactions
+// export const getTodayTransactions = async () => {
+//   const response = await API.get('/transactions/summary/today');
+//   return response.data;
+// };
+

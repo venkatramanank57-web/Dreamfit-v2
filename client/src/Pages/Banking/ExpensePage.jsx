@@ -1474,21 +1474,59 @@ export default function ExpensePage() {
     setShowDetailsModal(true);
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-  };
+  // const formatDate = (dateString) => {
+  //   return new Date(dateString).toLocaleDateString('en-IN', {
+  //     day: '2-digit',
+  //     month: 'short',
+  //     year: 'numeric'
+  //   });
+  // };
 
-  const formatTime = (dateString) => {
-    return new Date(dateString).toLocaleTimeString('en-IN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
+
+  // ✅ FIXED: Proper IST date formatting
+const formatDate = (dateString) => {
+  if (!dateString) return '-';
+  
+  const date = new Date(dateString);
+  
+  // Check if date is valid
+  if (isNaN(date.getTime())) return '-';
+  
+  // Convert to IST and format
+  return date.toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
+};
+
+  // const formatTime = (dateString) => {
+  //   return new Date(dateString).toLocaleTimeString('en-IN', {
+  //     hour: '2-digit',
+  //     minute: '2-digit',
+  //     hour12: true
+  //   });
+  // };
+
+  // ✅ FIXED: Proper IST time formatting
+const formatTime = (dateString) => {
+  if (!dateString) return '-';
+  
+  const date = new Date(dateString);
+  
+  // Check if date is valid
+  if (isNaN(date.getTime())) return '-';
+  
+  // Convert to IST and format
+  return date.toLocaleTimeString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+};
+
 
   const getCategoryLabel = (category, customCategory) => {
     const categories = {

@@ -4875,6 +4875,226 @@ const EXPENSE_CATEGORIES = [
 // ============================================
 // ✅ CREATE TRANSACTION - FIXED VERSION
 // ============================================
+// export const createTransaction = async (req, res) => {
+//   try {
+//     const {
+//       type,
+//       category,
+//       customCategory,
+//       amount,
+//       paymentMethod,
+//       customer,
+//       order,
+//       description,
+//       transactionDate,
+//       referenceNumber
+//     } = req.body;
+
+//     // 🔍 DEBUG: Log incoming request
+//     console.log("\n🔵🔵🔵 CREATE TRANSACTION CALLED 🔵🔵🔵");
+//     console.log("📥 Request body:", { 
+//       type, 
+//       category, 
+//       customCategory, 
+//       amount, 
+//       paymentMethod,
+//       customer: customer || 'No customer',
+//       order: order || 'No order',
+//       description: description?.substring(0, 30)
+//     });
+//     console.log("👤 User:", req.user?._id, req.user?.name);
+
+//     // Validation
+//     if (!type || !category || !amount || !paymentMethod) {
+//       console.log("❌ Validation failed: Missing required fields");
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Please fill all required fields'
+//       });
+//     }
+
+//     // Handle "other" categories
+//     let isOtherCategory = false;
+//     let finalCategory = category;
+//     let finalCustomCategory = null;
+
+//     // Income category validation
+//     if (type === 'income') {
+//       if (category === 'other-income') {
+//         isOtherCategory = true;
+//         finalCategory = 'other-income';
+//         finalCustomCategory = customCategory;
+        
+//         if (!customCategory) {
+//           console.log("❌ Other income category not specified");
+//           return res.status(400).json({
+//             success: false,
+//             message: 'Please specify the income category'
+//           });
+//         }
+//       } else if (!INCOME_CATEGORIES.includes(category)) {
+//         console.log("❌ Invalid income category:", category);
+//         return res.status(400).json({
+//           success: false,
+//           message: 'Invalid income category'
+//         });
+//       }
+//     }
+
+//     // Expense category validation
+//     if (type === 'expense') {
+//       if (category === 'other-expense') {
+//         isOtherCategory = true;
+//         finalCategory = 'other-expense';
+//         finalCustomCategory = customCategory;
+        
+//         if (!customCategory) {
+//           console.log("❌ Other expense category not specified");
+//           return res.status(400).json({
+//             success: false,
+//             message: 'Please specify the expense category'
+//           });
+//         }
+//       } else if (!EXPENSE_CATEGORIES.includes(category)) {
+//         console.log("❌ Invalid expense category:", category);
+//         return res.status(400).json({
+//           success: false,
+//           message: 'Invalid expense category'
+//         });
+//       }
+//     }
+
+//     // Set account type based on payment method
+//     const accountType = paymentMethod === 'cash' ? 'hand-cash' : 'bank';
+//     console.log("💰 Account type determined:", accountType);
+
+//     // Get customer details if customer ID is provided
+//     let customerDetails = null;
+//     if (customer) {
+//       console.log("🔍 Fetching customer details for:", customer);
+//       const customerData = await Customer.findById(customer).select('firstName lastName phone customerId');
+//       if (customerData) {
+//         customerDetails = {
+//           name: `${customerData.firstName || ''} ${customerData.lastName || ''}`.trim() || 'Unknown',
+//           phone: customerData.phone,
+//           id: customerData.customerId || customerData._id
+//         };
+//         console.log("✅ Customer found:", customerDetails.name);
+//       } else {
+//         console.log("⚠️ Customer not found with ID:", customer);
+//       }
+//     }
+
+//     // 🔥 FIXED: CHECK FOR DUPLICATE TRANSACTIONS - Added category and amount
+//     if (order && type === 'income') {
+//       console.log("\n🔍 CHECKING FOR DUPLICATE INCOME TRANSACTION:");
+//       console.log("   Order ID:", order);
+//       console.log("   Category:", finalCategory);
+//       console.log("   Amount:", Number(amount));
+//       console.log("   Payment Method:", paymentMethod);
+      
+//       const existingTransaction = await Transaction.findOne({
+//         order: order,
+//         type: 'income',
+//         category: finalCategory,  // ✅ CRITICAL: Category must match
+//         amount: Number(amount),   // ✅ CRITICAL: Amount must match
+//         paymentMethod: paymentMethod,
+//         status: 'completed'
+//       });
+      
+//       if (existingTransaction) {
+//         console.log("⚠️⚠️⚠️ DUPLICATE TRANSACTION DETECTED! ⚠️⚠️⚠️");
+//         console.log("   Existing transaction ID:", existingTransaction._id);
+//         console.log("   Existing category:", existingTransaction.category);
+//         console.log("   Existing amount:", existingTransaction.amount);
+//         console.log("   Skipping save - returning existing transaction");
+        
+//         const populatedExisting = await Transaction.findById(existingTransaction._id)
+//           .populate('customer', 'firstName lastName phone')
+//           .populate('createdBy', 'name')
+//           .populate('order', 'orderId customer');
+          
+//         return res.status(200).json({
+//           success: true,
+//           message: 'Transaction already exists for this order',
+//           data: populatedExisting,
+//           duplicate: true
+//         });
+//       } else {
+//         console.log("✅ No duplicate found - proceeding to create new transaction");
+//       }
+//     } else {
+//       console.log("🔍 Skipping duplicate check (not order-linked income transaction)");
+//     }
+
+//     // Create transaction data object
+//     const transactionData = {
+//       type,
+//       category: finalCategory,
+//       amount: Number(amount),
+//       paymentMethod,
+//       accountType,
+//       description: description || '',
+//       transactionDate: transactionDate || Date.now(),
+//       referenceNumber: referenceNumber || '',
+//       createdBy: req.user._id,
+//       status: 'completed'
+//     };
+
+//     // Add optional fields
+//     if (isOtherCategory) {
+//       transactionData.isOtherCategory = true;
+//       transactionData.customCategory = finalCustomCategory;
+//     }
+
+//     if (customer) {
+//       transactionData.customer = customer;
+//       transactionData.customerDetails = customerDetails;
+//     }
+
+//     if (order) {
+//       transactionData.order = order;
+//     }
+
+//     console.log("\n💾 Creating new transaction with data:", {
+//       type: transactionData.type,
+//       category: transactionData.category,
+//       amount: transactionData.amount,
+//       paymentMethod: transactionData.paymentMethod,
+//       accountType: transactionData.accountType,
+//       customer: transactionData.customer ? 'Yes' : 'No',
+//       order: transactionData.order ? 'Yes' : 'No'
+//     });
+
+//     // Create transaction
+//     const transaction = await Transaction.create(transactionData);
+//     console.log("✅✅✅ TRANSACTION CREATED SUCCESSFULLY! ID:", transaction._id);
+
+//     // Populate references
+//     const populatedTransaction = await Transaction.findById(transaction._id)
+//       .populate('customer', 'firstName lastName phone')
+//       .populate('createdBy', 'name')
+//       .populate('order', 'orderId customer totalAmount');
+
+//     console.log("✅ Returning created transaction to client\n");
+
+//     res.status(201).json({
+//       success: true,
+//       message: `${type === 'income' ? 'Income' : 'Expense'} added successfully`,
+//       data: populatedTransaction
+//     });
+
+//   } catch (error) {
+//     console.error("\n❌❌❌ TRANSACTION CREATION ERROR ❌❌❌");
+//     console.error("Error:", error);
+//     console.error("Stack:", error.stack);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Failed to create transaction',
+//       error: error.message
+//     });
+//   }
+// };
 export const createTransaction = async (req, res) => {
   try {
     const {
@@ -4900,7 +5120,8 @@ export const createTransaction = async (req, res) => {
       paymentMethod,
       customer: customer || 'No customer',
       order: order || 'No order',
-      description: description?.substring(0, 30)
+      description: description?.substring(0, 30),
+      transactionDate: transactionDate // Log the received date
     });
     console.log("👤 User:", req.user?._id, req.user?.name);
 
@@ -4996,8 +5217,8 @@ export const createTransaction = async (req, res) => {
       const existingTransaction = await Transaction.findOne({
         order: order,
         type: 'income',
-        category: finalCategory,  // ✅ CRITICAL: Category must match
-        amount: Number(amount),   // ✅ CRITICAL: Amount must match
+        category: finalCategory,
+        amount: Number(amount),
         paymentMethod: paymentMethod,
         status: 'completed'
       });
@@ -5027,6 +5248,54 @@ export const createTransaction = async (req, res) => {
       console.log("🔍 Skipping duplicate check (not order-linked income transaction)");
     }
 
+    // ✅ FIXED: Properly handle transaction date with IST timezone
+    let finalTransactionDate;
+    
+    if (transactionDate) {
+      // If date is provided from frontend
+      const receivedDate = new Date(transactionDate);
+      
+      // Check if it's a valid date
+      if (isNaN(receivedDate.getTime())) {
+        console.log("⚠️ Invalid date received, using current IST time");
+        const now = new Date();
+        const istNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+        finalTransactionDate = istNow;
+      } else {
+        // If the date doesn't include time (just YYYY-MM-DD), set to current time in IST
+        const dateStr = transactionDate.toString();
+        if (dateStr.length === 10) { // Format: YYYY-MM-DD
+          console.log("📅 Date without time detected, using current time in IST");
+          const now = new Date();
+          const istNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+          receivedDate.setHours(istNow.getHours(), istNow.getMinutes(), istNow.getSeconds(), istNow.getMilliseconds());
+          finalTransactionDate = receivedDate;
+        } else {
+          // Date with time - assume it's in IST and store as UTC
+          console.log("📅 Full date with time received:", transactionDate);
+          
+          // Convert IST to UTC for storage
+          // Subtract 5 hours 30 minutes to convert IST to UTC
+          const istTime = receivedDate.getTime();
+          const utcTime = istTime - (5.5 * 60 * 60 * 1000);
+          finalTransactionDate = new Date(utcTime);
+          
+          console.log("   IST Time:", receivedDate.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }));
+          console.log("   UTC Time stored:", finalTransactionDate.toISOString());
+        }
+      }
+    } else {
+      // No date provided - use current IST time
+      console.log("📅 No date provided, using current IST time");
+      const now = new Date();
+      const istNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+      finalTransactionDate = istNow;
+    }
+
+    console.log("✅ Final transaction date (to be stored):", finalTransactionDate);
+    console.log("   ISO String:", finalTransactionDate.toISOString());
+    console.log("   IST Display:", finalTransactionDate.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }));
+
     // Create transaction data object
     const transactionData = {
       type,
@@ -5035,7 +5304,7 @@ export const createTransaction = async (req, res) => {
       paymentMethod,
       accountType,
       description: description || '',
-      transactionDate: transactionDate || Date.now(),
+      transactionDate: finalTransactionDate, // ✅ Use the properly converted date
       referenceNumber: referenceNumber || '',
       createdBy: req.user._id,
       status: 'completed'
@@ -5062,6 +5331,8 @@ export const createTransaction = async (req, res) => {
       amount: transactionData.amount,
       paymentMethod: transactionData.paymentMethod,
       accountType: transactionData.accountType,
+      transactionDate: transactionData.transactionDate,
+      transactionDateIST: transactionData.transactionDate.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
       customer: transactionData.customer ? 'Yes' : 'No',
       order: transactionData.order ? 'Yes' : 'No'
     });
@@ -5076,12 +5347,25 @@ export const createTransaction = async (req, res) => {
       .populate('createdBy', 'name')
       .populate('order', 'orderId customer totalAmount');
 
+    // ✅ Add IST formatted date to response for frontend
+    const responseData = populatedTransaction.toObject();
+    responseData.transactionDateIST = transaction.transactionDate.toLocaleString('en-IN', { 
+      timeZone: 'Asia/Kolkata',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+
     console.log("✅ Returning created transaction to client\n");
 
     res.status(201).json({
       success: true,
       message: `${type === 'income' ? 'Income' : 'Expense'} added successfully`,
-      data: populatedTransaction
+      data: responseData
     });
 
   } catch (error) {
@@ -5095,10 +5379,206 @@ export const createTransaction = async (req, res) => {
     });
   }
 };
-
 // ============================================
 // ✅ GET ALL TRANSACTIONS WITH FILTERS
 // ============================================
+// export const getTransactions = async (req, res) => {
+//   try {
+//     const {
+//       type,
+//       accountType,
+//       category,
+//       startDate,
+//       endDate,
+//       order,
+//       customer,
+//       search,
+//       page = 1,
+//       limit = 20,
+//       sortBy = 'transactionDate',
+//       sortOrder = 'desc'
+//     } = req.query;
+
+//     console.log("\n💰💰💰 GET TRANSACTIONS CALLED 💰💰💰");
+//     console.log("📥 Query params:", { 
+//       type, 
+//       accountType, 
+//       category, 
+//       startDate, 
+//       endDate,
+//       page,
+//       limit
+//     });
+
+//     // Build filter
+//     const filter = { status: 'completed' };
+
+//     if (type) filter.type = type;
+//     if (accountType) filter.accountType = accountType;
+//     if (category) filter.category = category;
+//     if (order) filter.order = order;
+//     if (customer) filter.customer = customer;
+
+//     // Search in description or reference
+//     if (search) {
+//       filter.$or = [
+//         { description: { $regex: search, $options: 'i' } },
+//         { referenceNumber: { $regex: search, $options: 'i' } }
+//       ];
+//     }
+
+//     // Date range filter
+//     if (startDate || endDate) {
+//       filter.transactionDate = {};
+//       if (startDate) {
+//         const start = new Date(startDate);
+//         start.setHours(0, 0, 0, 0);
+//         filter.transactionDate.$gte = start;
+//         console.log("📅 Start date filter:", start);
+//       }
+//       if (endDate) {
+//         const end = new Date(endDate);
+//         end.setHours(23, 59, 59, 999);
+//         filter.transactionDate.$lte = end;
+//         console.log("📅 End date filter:", end);
+//       }
+//     }
+
+//     console.log("🔍 Final filter:", JSON.stringify(filter, null, 2));
+
+//     // Pagination
+//     const skip = (parseInt(page) - 1) * parseInt(limit);
+//     console.log("📄 Pagination - Skip:", skip, "Limit:", limit);
+
+//     // Get transactions
+//     const transactions = await Transaction.find(filter)
+//       .populate('customer', 'firstName lastName phone customerId')
+//       .populate('createdBy', 'name')
+//       .populate('order', 'orderId customer totalAmount status')
+//       .sort({ [sortBy]: sortOrder === 'desc' ? -1 : 1 })
+//       .skip(skip)
+//       .limit(parseInt(limit));
+
+//     // Get total count
+//     const total = await Transaction.countDocuments(filter);
+
+//     console.log(`✅ Found ${transactions.length} transactions for page ${page} (Total: ${total})`);
+
+//     // Calculate totals
+//     const totals = await Transaction.aggregate([
+//       { $match: filter },
+//       {
+//         $group: {
+//           _id: null,
+//           totalIncome: {
+//             $sum: {
+//               $cond: [{ $eq: ['$type', 'income'] }, '$amount', 0]
+//             }
+//           },
+//           totalExpense: {
+//             $sum: {
+//               $cond: [{ $eq: ['$type', 'expense'] }, '$amount', 0]
+//             }
+//           },
+//           handCashIncome: {
+//             $sum: {
+//               $cond: [
+//                 { $and: [{ $eq: ['$accountType', 'hand-cash'] }, { $eq: ['$type', 'income'] }] },
+//                 '$amount',
+//                 0
+//               ]
+//             }
+//           },
+//           handCashExpense: {
+//             $sum: {
+//               $cond: [
+//                 { $and: [{ $eq: ['$accountType', 'hand-cash'] }, { $eq: ['$type', 'expense'] }] },
+//                 '$amount',
+//                 0
+//               ]
+//             }
+//           },
+//           bankIncome: {
+//             $sum: {
+//               $cond: [
+//                 { $and: [{ $eq: ['$accountType', 'bank'] }, { $eq: ['$type', 'income'] }] },
+//                 '$amount',
+//                 0
+//               ]
+//             }
+//           },
+//           bankExpense: {
+//             $sum: {
+//               $cond: [
+//                 { $and: [{ $eq: ['$accountType', 'bank'] }, { $eq: ['$type', 'expense'] }] },
+//                 '$amount',
+//                 0
+//               ]
+//             }
+//           }
+//         }
+//       }
+//     ]);
+
+//     const summary = totals[0] || {
+//       totalIncome: 0,
+//       totalExpense: 0,
+//       handCashIncome: 0,
+//       handCashExpense: 0,
+//       bankIncome: 0,
+//       bankExpense: 0
+//     };
+
+//     // Calculate balances
+//     const handCashBalance = summary.handCashIncome - summary.handCashExpense;
+//     const bankBalance = summary.bankIncome - summary.bankExpense;
+
+//     console.log("📊 Summary calculated:", {
+//       totalIncome: summary.totalIncome,
+//       totalExpense: summary.totalExpense,
+//       handCashBalance,
+//       bankBalance
+//     });
+
+//     res.json({
+//       success: true,
+//       data: {
+//         transactions,
+//         summary: {
+//           totalIncome: summary.totalIncome,
+//           totalExpense: summary.totalExpense,
+//           netBalance: summary.totalIncome - summary.totalExpense,
+//           handCash: {
+//             income: summary.handCashIncome,
+//             expense: summary.handCashExpense,
+//             balance: handCashBalance
+//           },
+//           bank: {
+//             income: summary.bankIncome,
+//             expense: summary.bankExpense,
+//             balance: bankBalance
+//           },
+//           totalBalance: handCashBalance + bankBalance
+//         },
+//         pagination: {
+//           page: parseInt(page),
+//           limit: parseInt(limit),
+//           total,
+//           pages: Math.ceil(total / parseInt(limit))
+//         }
+//       }
+//     });
+
+//   } catch (error) {
+//     console.error('❌ Get transactions error:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Failed to fetch transactions',
+//       error: error.message
+//     });
+//   }
+// };
+
 export const getTransactions = async (req, res) => {
   try {
     const {
@@ -5181,6 +5661,40 @@ export const getTransactions = async (req, res) => {
 
     console.log(`✅ Found ${transactions.length} transactions for page ${page} (Total: ${total})`);
 
+    // ✅ ADD IST FORMATTED DATES TO EACH TRANSACTION
+    const formattedTransactions = transactions.map(transaction => {
+      const obj = transaction.toObject();
+      
+      // Format date and time in IST
+      const transactionDate = new Date(transaction.transactionDate);
+      
+      obj.transactionDateIST = transactionDate.toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+      
+      obj.transactionDateOnlyIST = transactionDate.toLocaleDateString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+      
+      obj.transactionTimeOnlyIST = transactionDate.toLocaleTimeString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+      
+      return obj;
+    });
+
     // Calculate totals
     const totals = await Transaction.aggregate([
       { $match: filter },
@@ -5257,10 +5771,11 @@ export const getTransactions = async (req, res) => {
       bankBalance
     });
 
+    // ✅ Send response with formatted transactions
     res.json({
       success: true,
       data: {
-        transactions,
+        transactions: formattedTransactions,
         summary: {
           totalIncome: summary.totalIncome,
           totalExpense: summary.totalExpense,
@@ -6032,91 +6547,151 @@ export const getTransactionsByDateRange = async (req, res) => {
 // ============================================
 // ✅ GET DASHBOARD DATA
 // ============================================
+// export const getDashboardData = async (req, res) => {
+//   try {
+//     console.log("\n📊 GET DASHBOARD DATA CALLED");
+
+//     const today = new Date();
+//     today.setHours(0, 0, 0, 0);
+
+//     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+//     const startOfYear = new Date(today.getFullYear(), 0, 1);
+
+//     console.log("📅 Date references:", { today, startOfMonth, startOfYear });
+
+//     // Get today's transactions
+//     const todayTransactions = await Transaction.find({
+//       transactionDate: { $gte: today },
+//       status: 'completed'
+//     });
+
+//     // Get this month's transactions
+//     const monthTransactions = await Transaction.find({
+//       transactionDate: { $gte: startOfMonth },
+//       status: 'completed'
+//     });
+
+//     // Get this year's transactions
+//     const yearTransactions = await Transaction.find({
+//       transactionDate: { $gte: startOfYear },
+//       status: 'completed'
+//     });
+
+//     // Calculate totals
+//     const todayIncome = todayTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+//     const todayExpense = todayTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    
+//     const monthIncome = monthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+//     const monthExpense = monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    
+//     const yearIncome = yearTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+//     const yearExpense = yearTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+
+//     // Get recent transactions
+//     const recentTransactions = await Transaction.find({ status: 'completed' })
+//       .populate('customer', 'firstName lastName phone')
+//       .populate('order', 'orderId')
+//       .sort('-transactionDate')
+//       .limit(10);
+
+//     console.log("✅ Dashboard data generated");
+//     console.log("📊 Today:", { income: todayIncome, expense: todayExpense, net: todayIncome - todayExpense });
+
+//     res.json({
+//       success: true,
+//       data: {
+//         today: {
+//           income: todayIncome,
+//           expense: todayExpense,
+//           net: todayIncome - todayExpense,
+//           count: todayTransactions.length
+//         },
+//         thisMonth: {
+//           income: monthIncome,
+//           expense: monthExpense,
+//           net: monthIncome - monthExpense,
+//           count: monthTransactions.length
+//         },
+//         thisYear: {
+//           income: yearIncome,
+//           expense: yearExpense,
+//           net: yearIncome - yearExpense,
+//           count: yearTransactions.length
+//         },
+//         recentTransactions
+//       }
+//     });
+
+//   } catch (error) {
+//     console.error('❌ Dashboard error:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Failed to fetch dashboard data',
+//       error: error.message
+//     });
+//   }
+// };
+// ✅ Replace your existing getDashboardData with this FAST version
 export const getDashboardData = async (req, res) => {
   try {
-    console.log("\n📊 GET DASHBOARD DATA CALLED");
-
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const startOfYear = new Date(today.getFullYear(), 0, 1);
 
-    console.log("📅 Date references:", { today, startOfMonth, startOfYear });
+    // ✅ FAST: Parallel execution using Aggregation (1 query instead of many)
+    const stats = await Transaction.aggregate([
+      { 
+        $match: { 
+          transactionDate: { $gte: startOfMonth }, 
+          status: 'completed' 
+        } 
+      },
+      {
+        $group: {
+          _id: {
+            isToday: { $gte: ["$transactionDate", today] },
+            type: "$type"
+          },
+          totalAmount: { $sum: "$amount" },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
 
-    // Get today's transactions
-    const todayTransactions = await Transaction.find({
-      transactionDate: { $gte: today },
-      status: 'completed'
-    });
+    // Format the aggregation results
+    const data = {
+      today: { income: 0, expense: 0, net: 0, count: 0 },
+      thisMonth: { income: 0, expense: 0, net: 0, count: 0 }
+    };
 
-    // Get this month's transactions
-    const monthTransactions = await Transaction.find({
-      transactionDate: { $gte: startOfMonth },
-      status: 'completed'
-    });
-
-    // Get this year's transactions
-    const yearTransactions = await Transaction.find({
-      transactionDate: { $gte: startOfYear },
-      status: 'completed'
-    });
-
-    // Calculate totals
-    const todayIncome = todayTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-    const todayExpense = todayTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-    
-    const monthIncome = monthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-    const monthExpense = monthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-    
-    const yearIncome = yearTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-    const yearExpense = yearTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-
-    // Get recent transactions
-    const recentTransactions = await Transaction.find({ status: 'completed' })
-      .populate('customer', 'firstName lastName phone')
-      .populate('order', 'orderId')
-      .sort('-transactionDate')
-      .limit(10);
-
-    console.log("✅ Dashboard data generated");
-    console.log("📊 Today:", { income: todayIncome, expense: todayExpense, net: todayIncome - todayExpense });
-
-    res.json({
-      success: true,
-      data: {
-        today: {
-          income: todayIncome,
-          expense: todayExpense,
-          net: todayIncome - todayExpense,
-          count: todayTransactions.length
-        },
-        thisMonth: {
-          income: monthIncome,
-          expense: monthExpense,
-          net: monthIncome - monthExpense,
-          count: monthTransactions.length
-        },
-        thisYear: {
-          income: yearIncome,
-          expense: yearExpense,
-          net: yearIncome - yearExpense,
-          count: yearTransactions.length
-        },
-        recentTransactions
+    stats.forEach(s => {
+      const type = s._id.type;
+      // Add to month totals
+      data.thisMonth[type] += s.totalAmount;
+      data.thisMonth.count += s.count;
+      // Add to today totals if applicable
+      if (s._id.isToday) {
+        data.today[type] += s.totalAmount;
+        data.today.count += s.count;
       }
     });
 
+    data.today.net = data.today.income - data.today.expense;
+    data.thisMonth.net = data.thisMonth.income - data.thisMonth.expense;
+
+    // ✅ FAST: Get recent transactions with 'lean' (removes overhead)
+    const recentTransactions = await Transaction.find({ status: 'completed' })
+      .select('amount type category customerDetails transactionDate') // Fetch only needed fields
+      .sort('-transactionDate')
+      .limit(10)
+      .lean();
+
+    res.json({ success: true, data: { ...data, recentTransactions } });
+
   } catch (error) {
-    console.error('❌ Dashboard error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch dashboard data',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
-
 // ============================================
 // ✅ GET TODAY'S TRANSACTIONS
 // ============================================
@@ -6202,265 +6777,1015 @@ export const getTodayTransactions = async (req, res) => {
   }
 };
 
+
+
+
+
+
 // ============================================
 // ✅ GET DAILY REVENUE STATS FOR CHART
 // ============================================
+// export const getDailyRevenueStats = async (req, res) => {
+//   try {
+//     const { period, startDate, endDate } = req.query;
+    
+//     console.log("\n📊 GETTING DAILY REVENUE STATS FOR CHART");
+//     console.log("Parameters:", { period, startDate, endDate });
+    
+//     // Build date filter based on period or custom dates
+//     let start, end;
+//     const today = new Date();
+    
+//     if (period === 'today') {
+//       start = new Date(today.setHours(0, 0, 0, 0));
+//       end = new Date(today.setHours(23, 59, 59, 999));
+//       console.log("📅 Period: Today");
+//     } 
+//     else if (period === 'week') {
+//       start = new Date(today);
+//       start.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
+//       start.setHours(0, 0, 0, 0);
+      
+//       end = new Date(start);
+//       end.setDate(start.getDate() + 7);
+//       end.setHours(23, 59, 59, 999);
+//       console.log("📅 Period: This Week");
+//     } 
+//     else if (period === 'month') {
+//       start = new Date(today.getFullYear(), today.getMonth(), 1);
+//       end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+//       end.setHours(23, 59, 59, 999);
+//       console.log("📅 Period: This Month");
+//     } 
+//     else if (startDate && endDate) {
+//       start = new Date(startDate);
+//       start.setHours(0, 0, 0, 0);
+      
+//       end = new Date(endDate);
+//       end.setHours(23, 59, 59, 999);
+//       console.log("📅 Period: Custom Range");
+//     } else {
+//       // Default to current month
+//       start = new Date(today.getFullYear(), today.getMonth(), 1);
+//       end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+//       end.setHours(23, 59, 59, 999);
+//       console.log("📅 Period: Default (Current Month)");
+//     }
+    
+//     console.log("📅 Date range:", { 
+//       start: start.toISOString(), 
+//       end: end.toISOString() 
+//     });
+
+//     // Get transactions grouped by date
+//     const transactions = await Transaction.aggregate([
+//       {
+//         $match: {
+//           transactionDate: { $gte: start, $lte: end },
+//           status: 'completed'
+//         }
+//       },
+//       {
+//         $group: {
+//           _id: {
+//             date: { $dateToString: { format: '%Y-%m-%d', date: '$transactionDate' } },
+//             type: '$type'
+//           },
+//           total: { $sum: '$amount' },
+//           count: { $sum: 1 }
+//         }
+//       },
+//       { $sort: { '_id.date': 1 } }
+//     ]);
+
+//     console.log("📊 Aggregated transactions:", transactions.length, "groups found");
+    
+//     if (transactions.length > 0) {
+//       console.log("Sample:", transactions[0]);
+//     } else {
+//       console.log("⚠️ No transactions found in date range");
+//     }
+
+//     // Prepare chart data based on period
+//     let chartData = [];
+
+//     if (period === 'today') {
+//       // Hourly data for today
+//       const hourlyData = {};
+      
+//       // Initialize hours
+//       for (let i = 0; i <= 23; i++) {
+//         const hourKey = i < 10 ? `0${i}:00` : `${i}:00`;
+//         hourlyData[hourKey] = { revenue: 0, expense: 0 };
+//       }
+
+//       // Fill with actual data
+//       transactions.forEach(item => {
+//         const dateStr = item._id.date;
+//         const itemDate = new Date(dateStr);
+//         const hour = itemDate.getHours();
+//         const hourKey = hour < 10 ? `0${hour}:00` : `${hour}:00`;
+        
+//         if (item._id.type === 'income') {
+//           hourlyData[hourKey].revenue = item.total;
+//         } else {
+//           hourlyData[hourKey].expense = item.total;
+//         }
+//       });
+
+//       // Convert to array (business hours 9 AM to 8 PM)
+//       for (let i = 9; i <= 20; i++) {
+//         const hourKey = i < 10 ? `0${i}:00` : `${i}:00`;
+//         const displayHour = i > 12 ? `${i-12} PM` : `${i} AM`;
+//         chartData.push({
+//           time: displayHour,
+//           revenue: hourlyData[hourKey].revenue || 0,
+//           expense: hourlyData[hourKey].expense || 0
+//         });
+//       }
+//     } 
+//     else if (period === 'week') {
+//       // Daily data for week
+//       const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+//       const dailyMap = new Map();
+      
+//       // Initialize days
+//       for (let i = 0; i < 7; i++) {
+//         const date = new Date(start);
+//         date.setDate(start.getDate() + i);
+//         const dateStr = date.toISOString().split('T')[0];
+//         dailyMap.set(dateStr, { 
+//           day: days[date.getDay()],
+//           revenue: 0, 
+//           expense: 0 
+//         });
+//       }
+
+//       // Fill with actual data
+//       transactions.forEach(item => {
+//         const dateStr = item._id.date;
+//         if (dailyMap.has(dateStr)) {
+//           const entry = dailyMap.get(dateStr);
+//           if (item._id.type === 'income') {
+//             entry.revenue = item.total;
+//           } else {
+//             entry.expense = item.total;
+//           }
+//         }
+//       });
+
+//       // Convert to array
+//       chartData = Array.from(dailyMap.values());
+//     }
+//     else {
+//       // Monthly/Period data - group by week or day
+//       const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+//       console.log("📅 Days in range:", diffDays);
+      
+//       if (diffDays <= 31) {
+//         // Daily data for shorter periods
+//         const dailyMap = new Map();
+        
+//         // Initialize all dates in range
+//         for (let i = 0; i <= diffDays; i++) {
+//           const date = new Date(start);
+//           date.setDate(start.getDate() + i);
+//           const dateStr = date.toISOString().split('T')[0];
+//           dailyMap.set(dateStr, { 
+//             day: date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
+//             revenue: 0, 
+//             expense: 0 
+//           });
+//         }
+
+//         // Fill with actual data
+//         transactions.forEach(item => {
+//           const dateStr = item._id.date;
+//           if (dailyMap.has(dateStr)) {
+//             const entry = dailyMap.get(dateStr);
+//             if (item._id.type === 'income') {
+//               entry.revenue = item.total;
+//             } else {
+//               entry.expense = item.total;
+//             }
+//           }
+//         });
+
+//         chartData = Array.from(dailyMap.values());
+//       } else {
+//         // Weekly data for longer periods
+//         const weeks = Math.ceil(diffDays / 7);
+//         console.log("📅 Using weekly grouping, weeks:", weeks);
+        
+//         const weeklyData = [];
+
+//         for (let w = 0; w < weeks; w++) {
+//           const weekStart = new Date(start);
+//           weekStart.setDate(start.getDate() + (w * 7));
+//           const weekEnd = new Date(weekStart);
+//           weekEnd.setDate(weekStart.getDate() + 6);
+
+//           let weekRevenue = 0;
+//           let weekExpense = 0;
+
+//           transactions.forEach(item => {
+//             const itemDate = new Date(item._id.date);
+//             if (itemDate >= weekStart && itemDate <= weekEnd) {
+//               if (item._id.type === 'income') {
+//                 weekRevenue += item.total;
+//               } else {
+//                 weekExpense += item.total;
+//               }
+//             }
+//           });
+
+//           weeklyData.push({
+//             day: `Week ${w + 1}`,
+//             revenue: weekRevenue,
+//             expense: weekExpense
+//           });
+//         }
+
+//         chartData = weeklyData;
+//       }
+//     }
+
+//     console.log("✅ Chart data prepared with", chartData.length, "entries");
+//     if (chartData.length > 0) {
+//       console.log("Sample:", chartData[0]);
+//     }
+
+//     // Calculate totals
+//     const totalRevenue = chartData.reduce((sum, item) => sum + (item.revenue || 0), 0);
+//     const totalExpense = chartData.reduce((sum, item) => sum + (item.expense || 0), 0);
+
+//     console.log("📊 Totals:", { totalRevenue, totalExpense, netProfit: totalRevenue - totalExpense });
+
+//     res.json({
+//       success: true,
+//       data: {
+//         chartData,
+//         summary: {
+//           totalRevenue,
+//           totalExpense,
+//           netProfit: totalRevenue - totalExpense,
+//           period: period || 'custom',
+//           dateRange: { start, end }
+//         }
+//       }
+//     });
+
+//   } catch (error) {
+//     console.error('❌ Error in getDailyRevenueStats:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Failed to fetch daily revenue stats',
+//       error: error.message
+//     });
+//   }
+// };
+
+
+
+
+// export const getDailyRevenueStats = async (req, res) => {
+//   try {
+//     const { period, startDate, endDate } = req.query;
+    
+//     console.log("\n📊 GETTING DAILY REVENUE STATS FOR CHART");
+//     console.log("Parameters:", { period, startDate, endDate });
+    
+//     // ✅ Get current date in IST
+//     const now = new Date();
+//     const istDateStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    
+//     let start, end;
+    
+//     if (period === 'today') {
+//       // ✅ FIXED: Set to IST day range, then convert to UTC for DB query
+//       const istStart = new Date(istDateStr + 'T00:00:00+05:30');
+//       const istEnd = new Date(istDateStr + 'T23:59:59+05:30');
+      
+//       // Convert IST to UTC for database query
+//       start = new Date(istStart.getTime() - (5.5 * 60 * 60 * 1000));
+//       end = new Date(istEnd.getTime() - (5.5 * 60 * 60 * 1000));
+      
+//       console.log("📅 Period: Today (IST to UTC)", { 
+//         istStart, istEnd, 
+//         startUTC: start.toISOString(), 
+//         endUTC: end.toISOString() 
+//       });
+//     } 
+//     else if (period === 'week') {
+//       const istDate = new Date(istDateStr + 'T00:00:00+05:30');
+//       const weekStart = new Date(istDate);
+//       weekStart.setDate(istDate.getDate() - istDate.getDay()); // Sunday
+//       weekStart.setHours(0, 0, 0, 0);
+      
+//       const weekEnd = new Date(weekStart);
+//       weekEnd.setDate(weekStart.getDate() + 6);
+//       weekEnd.setHours(23, 59, 59, 999);
+      
+//       start = new Date(weekStart.getTime() - (5.5 * 60 * 60 * 1000));
+//       end = new Date(weekEnd.getTime() - (5.5 * 60 * 60 * 1000));
+      
+//       console.log("📅 Period: Week", { weekStart, weekEnd, start, end });
+//     } 
+//     else if (period === 'month') {
+//       const istDate = new Date(istDateStr + 'T00:00:00+05:30');
+//       const monthStart = new Date(istDate.getFullYear(), istDate.getMonth(), 1);
+//       monthStart.setHours(0, 0, 0, 0);
+      
+//       const monthEnd = new Date(istDate.getFullYear(), istDate.getMonth() + 1, 0);
+//       monthEnd.setHours(23, 59, 59, 999);
+      
+//       start = new Date(monthStart.getTime() - (5.5 * 60 * 60 * 1000));
+//       end = new Date(monthEnd.getTime() - (5.5 * 60 * 60 * 1000));
+      
+//       console.log("📅 Period: Month", { monthStart, monthEnd, start, end });
+//     } 
+//     else if (startDate && endDate) {
+//       // Custom range - assume dates are in IST
+//       const customStart = new Date(startDate + 'T00:00:00+05:30');
+//       const customEnd = new Date(endDate + 'T23:59:59+05:30');
+      
+//       start = new Date(customStart.getTime() - (5.5 * 60 * 60 * 1000));
+//       end = new Date(customEnd.getTime() - (5.5 * 60 * 60 * 1000));
+      
+//       console.log("📅 Period: Custom", { customStart, customEnd, start, end });
+//     } 
+//     else {
+//       // Default to current month
+//       const istDate = new Date(istDateStr + 'T00:00:00+05:30');
+//       const monthStart = new Date(istDate.getFullYear(), istDate.getMonth(), 1);
+//       monthStart.setHours(0, 0, 0, 0);
+      
+//       const monthEnd = new Date(istDate.getFullYear(), istDate.getMonth() + 1, 0);
+//       monthEnd.setHours(23, 59, 59, 999);
+      
+//       start = new Date(monthStart.getTime() - (5.5 * 60 * 60 * 1000));
+//       end = new Date(monthEnd.getTime() - (5.5 * 60 * 60 * 1000));
+      
+//       console.log("📅 Period: Default (Current Month)", { monthStart, monthEnd, start, end });
+//     }
+    
+//     console.log("📅 Final date range (UTC):", { 
+//       start: start.toISOString(), 
+//       end: end.toISOString() 
+//     });
+
+//     // Get transactions grouped by date
+//     const transactions = await Transaction.aggregate([
+//       {
+//         $match: {
+//           transactionDate: { $gte: start, $lte: end },
+//           status: 'completed'
+//         }
+//       },
+//       {
+//         $group: {
+//           _id: {
+//             date: { $dateToString: { format: '%Y-%m-%d', date: '$transactionDate' } },
+//             type: '$type'
+//           },
+//           total: { $sum: '$amount' },
+//           count: { $sum: 1 }
+//         }
+//       },
+//       { $sort: { '_id.date': 1 } }
+//     ]);
+
+//     console.log("📊 Aggregated transactions:", transactions.length, "groups found");
+    
+//     if (transactions.length > 0) {
+//       console.log("Sample:", transactions[0]);
+//     } else {
+//       console.log("⚠️ No transactions found in date range");
+//     }
+
+//     // Prepare chart data based on period
+//     let chartData = [];
+
+//     if (period === 'today') {
+//       // ✅ FIXED: Hourly data for today using IST hours
+//       const hourlyData = {};
+      
+//       // Initialize hours from 9 AM to 8 PM
+//       for (let i = 9; i <= 20; i++) {
+//         const hourKey = i < 10 ? `0${i}:00` : `${i}:00`;
+//         hourlyData[hourKey] = { revenue: 0, expense: 0 };
+//       }
+
+//       // Fill with actual data - convert UTC to IST for hour grouping
+//       transactions.forEach(item => {
+//         const dateStr = item._id.date;
+//         const itemDate = new Date(dateStr);
+//         // Add 5.5 hours to get IST hour
+//         const istHour = new Date(itemDate.getTime() + (5.5 * 60 * 60 * 1000)).getHours();
+        
+//         if (istHour >= 9 && istHour <= 20) {
+//           const hourKey = istHour < 10 ? `0${istHour}:00` : `${istHour}:00`;
+          
+//           if (item._id.type === 'income') {
+//             hourlyData[hourKey].revenue = (hourlyData[hourKey].revenue || 0) + item.total;
+//           } else if (item._id.type === 'expense') {
+//             hourlyData[hourKey].expense = (hourlyData[hourKey].expense || 0) + item.total;
+//           }
+//         }
+//       });
+
+//       // Convert to array for chart
+//       for (let i = 9; i <= 20; i++) {
+//         const hourKey = i < 10 ? `0${i}:00` : `${i}:00`;
+//         const displayHour = i > 12 ? `${i-12} PM` : `${i} AM`;
+//         chartData.push({
+//           time: displayHour,
+//           revenue: hourlyData[hourKey].revenue || 0,
+//           expense: hourlyData[hourKey].expense || 0
+//         });
+//       }
+//     } 
+//     else if (period === 'week') {
+//       // Daily data for week
+//       const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+//       const dailyMap = new Map();
+      
+//       // Initialize days - use IST dates
+//       const istDate = new Date(istDateStr + 'T00:00:00+05:30');
+//       const weekStartIST = new Date(istDate);
+//       weekStartIST.setDate(istDate.getDate() - istDate.getDay());
+      
+//       for (let i = 0; i < 7; i++) {
+//         const date = new Date(weekStartIST);
+//         date.setDate(weekStartIST.getDate() + i);
+//         const dateStr = date.toISOString().split('T')[0];
+//         dailyMap.set(dateStr, { 
+//           day: days[date.getDay()],
+//           revenue: 0, 
+//           expense: 0 
+//         });
+//       }
+
+//       // Fill with actual data
+//       transactions.forEach(item => {
+//         const dateStr = item._id.date;
+//         // Convert UTC date to IST date string for matching
+//         const utcDate = new Date(dateStr);
+//         const istDateStr = new Date(utcDate.getTime() + (5.5 * 60 * 60 * 1000)).toISOString().split('T')[0];
+        
+//         if (dailyMap.has(istDateStr)) {
+//           const entry = dailyMap.get(istDateStr);
+//           if (item._id.type === 'income') {
+//             entry.revenue = (entry.revenue || 0) + item.total;
+//           } else if (item._id.type === 'expense') {
+//             entry.expense = (entry.expense || 0) + item.total;
+//           }
+//         }
+//       });
+
+//       // Convert to array
+//       chartData = Array.from(dailyMap.values());
+//     }
+//     else {
+//       // Monthly/Period data - group by day or week
+//       const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+//       console.log("📅 Days in range:", diffDays);
+      
+//       if (diffDays <= 31) {
+//         // Daily data for shorter periods
+//         const dailyMap = new Map();
+        
+//         // Initialize all dates in range (using IST)
+//         for (let i = 0; i <= diffDays; i++) {
+//           const date = new Date(start);
+//           date.setDate(start.getDate() + i);
+//           // Convert to IST for display
+//           const istDate = new Date(date.getTime() + (5.5 * 60 * 60 * 1000));
+//           const dateStr = istDate.toISOString().split('T')[0];
+//           dailyMap.set(dateStr, { 
+//             day: istDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+//             revenue: 0, 
+//             expense: 0 
+//           });
+//         }
+
+//         // Fill with actual data
+//         transactions.forEach(item => {
+//           const utcDate = new Date(item._id.date);
+//           const istDateStr = new Date(utcDate.getTime() + (5.5 * 60 * 60 * 1000)).toISOString().split('T')[0];
+          
+//           if (dailyMap.has(istDateStr)) {
+//             const entry = dailyMap.get(istDateStr);
+//             if (item._id.type === 'income') {
+//               entry.revenue = (entry.revenue || 0) + item.total;
+//             } else if (item._id.type === 'expense') {
+//               entry.expense = (entry.expense || 0) + item.total;
+//             }
+//           }
+//         });
+
+//         chartData = Array.from(dailyMap.values());
+//       } else {
+//         // Weekly data for longer periods
+//         const weeks = Math.ceil(diffDays / 7);
+//         console.log("📅 Using weekly grouping, weeks:", weeks);
+        
+//         const weeklyData = [];
+
+//         for (let w = 0; w < weeks; w++) {
+//           const weekStart = new Date(start);
+//           weekStart.setDate(start.getDate() + (w * 7));
+//           const weekEnd = new Date(weekStart);
+//           weekEnd.setDate(weekStart.getDate() + 6);
+
+//           let weekRevenue = 0;
+//           let weekExpense = 0;
+
+//           transactions.forEach(item => {
+//             const itemDate = new Date(item._id.date);
+//             if (itemDate >= weekStart && itemDate <= weekEnd) {
+//               if (item._id.type === 'income') {
+//                 weekRevenue += item.total;
+//               } else if (item._id.type === 'expense') {
+//                 weekExpense += item.total;
+//               }
+//             }
+//           });
+
+//           weeklyData.push({
+//             day: `Week ${w + 1}`,
+//             revenue: weekRevenue,
+//             expense: weekExpense
+//           });
+//         }
+
+//         chartData = weeklyData;
+//       }
+//     }
+
+//     console.log("✅ Chart data prepared with", chartData.length, "entries");
+//     if (chartData.length > 0) {
+//       console.log("Sample chart data:", chartData[0]);
+//     }
+
+//     // Calculate totals
+//     const totalRevenue = chartData.reduce((sum, item) => sum + (item.revenue || 0), 0);
+//     const totalExpense = chartData.reduce((sum, item) => sum + (item.expense || 0), 0);
+
+//     console.log("📊 Totals:", { totalRevenue, totalExpense, netProfit: totalRevenue - totalExpense });
+
+//     res.json({
+//       success: true,
+//       data: {
+//         chartData,
+//         summary: {
+//           totalRevenue,
+//           totalExpense,
+//           netProfit: totalRevenue - totalExpense,
+//           period: period || 'custom',
+//           dateRange: { start, end }
+//         }
+//       }
+//     });
+
+//   } catch (error) {
+//     console.error('❌ Error in getDailyRevenueStats:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Failed to fetch daily revenue stats',
+//       error: error.message
+//     });
+//   }
+// };
+
+
+
+// controllers/transaction.controller.js
+
+// export const getDailyRevenueStats = async (req, res) => {
+//   try {
+//     const { period, startDate, endDate } = req.query;
+    
+//     console.log("\n📊 GETTING DAILY REVENUE STATS FOR CHART");
+//     console.log("Parameters:", { period, startDate, endDate });
+    
+//     // ✅ Get current date in IST
+//     const now = new Date();
+//     const istDateStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    
+//     let start, end;
+    
+//     // 1. Determine Date Boundaries (IST to UTC)
+//     if (period === 'today') {
+//       const istStart = new Date(istDateStr + 'T00:00:00+05:30');
+//       const istEnd = new Date(istDateStr + 'T23:59:59+05:30');
+//       start = new Date(istStart.getTime() - (5.5 * 60 * 60 * 1000));
+//       end = new Date(istEnd.getTime() - (5.5 * 60 * 60 * 1000));
+//     } 
+//     else if (period === 'week') {
+//       const istDate = new Date(istDateStr + 'T00:00:00+05:30');
+//       const weekStartIST = new Date(istDate);
+//       weekStartIST.setDate(istDate.getDate() - istDate.getDay());
+//       const weekEndIST = new Date(weekStartIST);
+//       weekEndIST.setDate(weekStartIST.getDate() + 6);
+//       weekEndIST.setHours(23, 59, 59, 999);
+
+//       start = new Date(weekStartIST.getTime() - (5.5 * 60 * 60 * 1000));
+//       end = new Date(weekEndIST.getTime() - (5.5 * 60 * 60 * 1000));
+//     } 
+//     else if (period === 'month') {
+//       const monthStartIST = new Date(now.getFullYear(), now.getMonth(), 1);
+//       const monthEndIST = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      
+//       start = new Date(monthStartIST.getTime() - (5.5 * 60 * 60 * 1000));
+//       end = new Date(monthEndIST.getTime() - (5.5 * 60 * 60 * 1000));
+//     } 
+//     else if (startDate && endDate) {
+//       const customStart = new Date(startDate + 'T00:00:00+05:30');
+//       const customEnd = new Date(endDate + 'T23:59:59+05:30');
+//       start = new Date(customStart.getTime() - (5.5 * 60 * 60 * 1000));
+//       end = new Date(customEnd.getTime() - (5.5 * 60 * 60 * 1000));
+//     } 
+//     else {
+//       // Default to current month
+//       const monthStartIST = new Date(now.getFullYear(), now.getMonth(), 1);
+//       const monthEndIST = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+//       start = new Date(monthStartIST.getTime() - (5.5 * 60 * 60 * 1000));
+//       end = new Date(monthEndIST.getTime() - (5.5 * 60 * 60 * 1000));
+//     }
+
+//     console.log("📅 Final DB Range (UTC):", start.toISOString(), "to", end.toISOString());
+
+//     // 2. Optimized Aggregation Query
+//     const transactions = await Transaction.aggregate([
+//       {
+//         $match: {
+//           transactionDate: { $gte: start, $lte: end },
+//           status: 'completed'
+//         }
+//       },
+//       {
+//         $group: {
+//           _id: {
+//             // Group by date and type for sorting/mapping
+//             date: { $dateToString: { format: '%Y-%m-%d', date: '$transactionDate', timezone: "+05:30" } },
+//             type: '$type'
+//           },
+//           total: { $sum: '$amount' }
+//         }
+//       },
+//       { $sort: { '_id.date': 1 } }
+//     ]).allowDiskUse(true);
+
+//     // 3. Prepare Chart Data
+//     let chartData = [];
+
+//     if (period === 'today') {
+//       const hourlyData = {};
+//       for (let i = 9; i <= 20; i++) {
+//         const hourKey = i < 10 ? `0${i}:00` : `${i}:00`;
+//         hourlyData[hourKey] = { revenue: 0, expense: 0 };
+//       }
+
+//       // Re-fetch with hour grouping for today specifically to be precise
+//       const todayHourly = await Transaction.aggregate([
+//         { $match: { transactionDate: { $gte: start, $lte: end }, status: 'completed' } },
+//         {
+//           $group: {
+//             _id: {
+//               hour: { $hour: { date: "$transactionDate", timezone: "+05:30" } },
+//               type: "$type"
+//             },
+//             total: { $sum: "$amount" }
+//           }
+//         }
+//       ]);
+
+//       todayHourly.forEach(item => {
+//         const hr = item._id.hour;
+//         if (hr >= 9 && hr <= 20) {
+//           const hourKey = hr < 10 ? `0${hr}:00` : `${hr}:00`;
+//           if (item._id.type === 'income') hourlyData[hourKey].revenue = item.total;
+//           else hourlyData[hourKey].expense = item.total;
+//         }
+//       });
+
+//       for (let i = 9; i <= 20; i++) {
+//         const hourKey = i < 10 ? `0${i}:00` : `${i}:00`;
+//         const displayHour = i > 12 ? `${i - 12} PM` : (i === 12 ? "12 PM" : `${i} AM`);
+//         chartData.push({ time: displayHour, revenue: hourlyData[hourKey].revenue, expense: hourlyData[hourKey].expense });
+//       }
+//     } 
+//     else {
+//       // Logic for Week/Month/Custom
+//       const dailyMap = new Map();
+//       const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+      
+//       // Initialize map with all dates in range
+//       for (let i = 0; i <= diffDays; i++) {
+//         const d = new Date(start.getTime() + (i * 24 * 60 * 60 * 1000) + (5.5 * 60 * 60 * 1000));
+//         const dStr = d.toISOString().split('T')[0];
+//         dailyMap.set(dStr, { 
+//           day: d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }), 
+//           revenue: 0, 
+//           expense: 0 
+//         });
+//       }
+
+//       transactions.forEach(item => {
+//         const dStr = item._id.date;
+//         if (dailyMap.has(dStr)) {
+//           const entry = dailyMap.get(dStr);
+//           if (item._id.type === 'income') entry.revenue += item.total;
+//           else entry.expense += item.total;
+//         }
+//       });
+//       chartData = Array.from(dailyMap.values());
+//     }
+
+//     // 4. Calculate Summary Totals
+//     const totalRevenue = chartData.reduce((sum, item) => sum + (item.revenue || 0), 0);
+//     const totalExpense = chartData.reduce((sum, item) => sum + (item.expense || 0), 0);
+
+//     console.log("✅ Data Ready - Revenue:", totalRevenue);
+
+//     res.json({
+//       success: true,
+//       data: {
+//         chartData,
+//         summary: {
+//           totalRevenue: Math.round(totalRevenue),
+//           totalExpense: Math.round(totalExpense),
+//           netProfit: Math.round(totalRevenue - totalExpense),
+//           period: period || 'custom',
+//           dateRange: { start, end }
+//         }
+//       }
+//     });
+
+//   } catch (error) {
+//     console.error('❌ Error in getDailyRevenueStats:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Failed to fetch revenue stats',
+//       error: error.message
+//     });
+//   }
+// };
+// controllers/transaction.controller.js
+
+// export const getDailyRevenueStats = async (req, res) => {
+//   try {
+//     const { period, startDate, endDate } = req.query;
+    
+//     console.log("\n📊 GETTING DAILY REVENUE STATS (OPTIMIZED)");
+    
+//     // 1. Get current date in IST
+//     const now = new Date();
+//     const istNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+//     const istDateStr = istNow.toLocaleDateString('en-CA'); // YYYY-MM-DD
+    
+//     let start, end;
+    
+//     // Boundary setup (IST to UTC conversion)
+//     if (period === 'today') {
+//       const istStart = new Date(istDateStr + 'T00:00:00+05:30');
+//       const istEnd = new Date(istDateStr + 'T23:59:59+05:30');
+//       start = new Date(istStart.getTime() - (5.5 * 60 * 60 * 1000));
+//       end = new Date(istEnd.getTime() - (5.5 * 60 * 60 * 1000));
+//     } 
+//     else if (period === 'week') {
+//       const weekStartIST = new Date(istNow);
+//       weekStartIST.setDate(istNow.getDate() - istNow.getDay());
+//       weekStartIST.setHours(0, 0, 0, 0);
+      
+//       const weekEndIST = new Date(weekStartIST);
+//       weekEndIST.setDate(weekStartIST.getDate() + 6);
+//       weekEndIST.setHours(23, 59, 59, 999);
+
+//       start = new Date(weekStartIST.getTime() - (5.5 * 60 * 60 * 1000));
+//       end = new Date(weekEndIST.getTime() - (5.5 * 60 * 60 * 1000));
+//     } 
+//     else if (startDate && endDate) {
+//       const customStart = new Date(startDate + 'T00:00:00+05:30');
+//       const customEnd = new Date(endDate + 'T23:59:59+05:30');
+//       start = new Date(customStart.getTime() - (5.5 * 60 * 60 * 1000));
+//       end = new Date(customEnd.getTime() - (5.5 * 60 * 60 * 1000));
+//     }
+//     else {
+//       // Default: Month
+//       const monthStartIST = new Date(istNow.getFullYear(), istNow.getMonth(), 1);
+//       const monthEndIST = new Date(istNow.getFullYear(), istNow.getMonth() + 1, 0, 23, 59, 59, 999);
+//       start = new Date(monthStartIST.getTime() - (5.5 * 60 * 60 * 1000));
+//       end = new Date(monthEndIST.getTime() - (5.5 * 60 * 60 * 1000));
+//     }
+
+//     // ✅ SINGLE OPTIMIZED AGGREGATION: Grouping based on period
+//     const formatStr = period === 'today' ? '%H:00' : '%Y-%m-%d';
+    
+//     const transactions = await Transaction.aggregate([
+//       { 
+//         $match: { 
+//           transactionDate: { $gte: start, $lte: end }, 
+//           status: 'completed' 
+//         } 
+//       },
+//       {
+//         $group: {
+//           _id: {
+//             // Using IST Timezone directly in MongoDB for precision
+//             date: { $dateToString: { format: formatStr, date: '$transactionDate', timezone: "+05:30" } },
+//             type: '$type'
+//           },
+//           total: { $sum: '$amount' }
+//         }
+//       },
+//       { $sort: { '_id.date': 1 } }
+//     ]).allowDiskUse(true);
+
+//     let chartData = [];
+
+//     // 2. Prepare Chart Data for UI
+//     if (period === 'today') {
+//       const hourlyMap = new Map();
+//       // Only Business Hours (9 AM to 8 PM) or full 24h as per your previous logic
+//       for (let i = 9; i <= 20; i++) {
+//         const hourKey = i < 10 ? `0${i}:00` : `${i}:00`;
+//         const displayHour = i > 12 ? `${i - 12} PM` : (i === 12 ? "12 PM" : `${i} AM`);
+//         hourlyMap.set(hourKey, { time: displayHour, revenue: 0, expense: 0 });
+//       }
+
+//       transactions.forEach(item => {
+//         if (hourlyMap.has(item._id.date)) {
+//           const entry = hourlyMap.get(item._id.date);
+//           if (item._id.type === 'income') entry.revenue = item.total;
+//           else entry.expense = item.total;
+//         }
+//       });
+//       chartData = Array.from(hourlyMap.values());
+//     } 
+//     else {
+//       const dailyMap = new Map();
+//       const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+      
+//       for (let i = 0; i <= diffDays; i++) {
+//         const d = new Date(start.getTime() + (i * 24 * 60 * 60 * 1000) + (5.5 * 60 * 60 * 1000));
+//         const dStr = d.toISOString().split('T')[0];
+//         dailyMap.set(dStr, { 
+//           day: d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }), 
+//           revenue: 0, 
+//           expense: 0 
+//         });
+//       }
+
+//       transactions.forEach(item => {
+//         const dStr = item._id.date;
+//         if (dailyMap.has(dStr)) {
+//           const entry = dailyMap.get(dStr);
+//           if (item._id.type === 'income') entry.revenue += item.total;
+//           else entry.expense += item.total;
+//         }
+//       });
+//       chartData = Array.from(dailyMap.values());
+//     }
+
+//     // 3. Final Summary Calculation
+//     const totalRevenue = chartData.reduce((sum, item) => sum + item.revenue, 0);
+//     const totalExpense = chartData.reduce((sum, item) => sum + item.expense, 0);
+
+//     res.json({
+//       success: true,
+//       data: {
+//         chartData,
+//         summary: {
+//           totalRevenue: Math.round(totalRevenue),
+//           totalExpense: Math.round(totalExpense),
+//           netProfit: Math.round(totalRevenue - totalExpense),
+//           period: period || 'custom'
+//         }
+//       }
+//     });
+
+//   } catch (error) {
+//     console.error('❌ Error in getDailyRevenueStats:', error);
+//     res.status(500).json({ success: false, message: 'Failed to fetch chart data' });
+//   }
+// };
 export const getDailyRevenueStats = async (req, res) => {
   try {
     const { period, startDate, endDate } = req.query;
     
-    console.log("\n📊 GETTING DAILY REVENUE STATS FOR CHART");
-    console.log("Parameters:", { period, startDate, endDate });
+    console.log("\n📊 GETTING DAILY REVENUE STATS (FIXED)");
     
-    // Build date filter based on period or custom dates
+    const now = new Date();
+    const istNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const istDateStr = istNow.toLocaleDateString('en-CA'); 
+    
     let start, end;
-    const today = new Date();
     
     if (period === 'today') {
-      start = new Date(today.setHours(0, 0, 0, 0));
-      end = new Date(today.setHours(23, 59, 59, 999));
-      console.log("📅 Period: Today");
+      const istStart = new Date(istDateStr + 'T00:00:00+05:30');
+      const istEnd = new Date(istDateStr + 'T23:59:59+05:30');
+      start = new Date(istStart.getTime() - (5.5 * 60 * 60 * 1000));
+      end = new Date(istEnd.getTime() - (5.5 * 60 * 60 * 1000));
     } 
     else if (period === 'week') {
-      start = new Date(today);
-      start.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
-      start.setHours(0, 0, 0, 0);
-      
-      end = new Date(start);
-      end.setDate(start.getDate() + 7);
-      end.setHours(23, 59, 59, 999);
-      console.log("📅 Period: This Week");
+      const weekStartIST = new Date(istNow);
+      weekStartIST.setDate(istNow.getDate() - istNow.getDay());
+      weekStartIST.setHours(0, 0, 0, 0);
+      const weekEndIST = new Date(weekStartIST);
+      weekEndIST.setDate(weekStartIST.getDate() + 6);
+      weekEndIST.setHours(23, 59, 59, 999);
+      start = new Date(weekStartIST.getTime() - (5.5 * 60 * 60 * 1000));
+      end = new Date(weekEndIST.getTime() - (5.5 * 60 * 60 * 1000));
     } 
-    else if (period === 'month') {
-      start = new Date(today.getFullYear(), today.getMonth(), 1);
-      end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      end.setHours(23, 59, 59, 999);
-      console.log("📅 Period: This Month");
-    } 
-    else if (startDate && endDate) {
-      start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      
-      end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      console.log("📅 Period: Custom Range");
-    } else {
-      // Default to current month
-      start = new Date(today.getFullYear(), today.getMonth(), 1);
-      end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      end.setHours(23, 59, 59, 999);
-      console.log("📅 Period: Default (Current Month)");
+    else {
+      const istStart = startDate ? new Date(startDate + 'T00:00:00+05:30') : new Date(istNow.getFullYear(), istNow.getMonth(), 1);
+      const istEnd = endDate ? new Date(endDate + 'T23:59:59+05:30') : new Date(istNow.getFullYear(), istNow.getMonth() + 1, 0, 23, 59, 59, 999);
+      start = new Date(istStart.getTime() - (5.5 * 60 * 60 * 1000));
+      end = new Date(istEnd.getTime() - (5.5 * 60 * 60 * 1000));
     }
-    
-    console.log("📅 Date range:", { 
-      start: start.toISOString(), 
-      end: end.toISOString() 
-    });
 
-    // Get transactions grouped by date
+    // ✅ FIXED: formatStr for exact matching
+    const formatStr = period === 'today' ? '%H:00' : '%Y-%m-%d';
+    
     const transactions = await Transaction.aggregate([
-      {
-        $match: {
-          transactionDate: { $gte: start, $lte: end },
-          status: 'completed'
-        }
-      },
+      { $match: { transactionDate: { $gte: start, $lte: end }, status: 'completed' } },
       {
         $group: {
           _id: {
-            date: { $dateToString: { format: '%Y-%m-%d', date: '$transactionDate' } },
+            date: { $dateToString: { format: formatStr, date: '$transactionDate', timezone: "+05:30" } },
             type: '$type'
           },
-          total: { $sum: '$amount' },
-          count: { $sum: 1 }
+          total: { $sum: '$amount' }
         }
       },
       { $sort: { '_id.date': 1 } }
     ]);
 
-    console.log("📊 Aggregated transactions:", transactions.length, "groups found");
-    
-    if (transactions.length > 0) {
-      console.log("Sample:", transactions[0]);
-    } else {
-      console.log("⚠️ No transactions found in date range");
-    }
-
-    // Prepare chart data based on period
     let chartData = [];
 
     if (period === 'today') {
-      // Hourly data for today
-      const hourlyData = {};
-      
-      // Initialize hours
-      for (let i = 0; i <= 23; i++) {
-        const hourKey = i < 10 ? `0${i}:00` : `${i}:00`;
-        hourlyData[hourKey] = { revenue: 0, expense: 0 };
+      const hourlyMap = new Map();
+      // ✅ 9 AM to 8 PM வரைக்கும் Slots-ஐ சரியாக செட் பண்றோம்
+      for (let i = 9; i <= 20; i++) {
+        const hourKey = i < 10 ? `0${i}:00` : `${i}:00`; // "09:00", "10:00"...
+        const displayHour = i > 12 ? `${i - 12} PM` : (i === 12 ? "12 PM" : `${i} AM`);
+        hourlyMap.set(hourKey, { time: displayHour, revenue: 0, expense: 0 });
       }
 
-      // Fill with actual data
       transactions.forEach(item => {
-        const dateStr = item._id.date;
-        const itemDate = new Date(dateStr);
-        const hour = itemDate.getHours();
-        const hourKey = hour < 10 ? `0${hour}:00` : `${hour}:00`;
-        
-        if (item._id.type === 'income') {
-          hourlyData[hourKey].revenue = item.total;
-        } else {
-          hourlyData[hourKey].expense = item.total;
+        // Item date is already in "HH:00" format due to aggregate
+        if (hourlyMap.has(item._id.date)) {
+          const entry = hourlyMap.get(item._id.date);
+          if (item._id.type === 'income') entry.revenue = item.total;
+          else if (item._id.type === 'expense') entry.expense = item.total;
         }
       });
-
-      // Convert to array (business hours 9 AM to 8 PM)
-      for (let i = 9; i <= 20; i++) {
-        const hourKey = i < 10 ? `0${i}:00` : `${i}:00`;
-        const displayHour = i > 12 ? `${i-12} PM` : `${i} AM`;
-        chartData.push({
-          time: displayHour,
-          revenue: hourlyData[hourKey].revenue || 0,
-          expense: hourlyData[hourKey].expense || 0
-        });
-      }
+      chartData = Array.from(hourlyMap.values());
     } 
-    else if (period === 'week') {
-      // Daily data for week
-      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    else {
       const dailyMap = new Map();
+      const diffDays = Math.round((end - start) / (1000 * 60 * 60 * 24));
       
-      // Initialize days
-      for (let i = 0; i < 7; i++) {
-        const date = new Date(start);
-        date.setDate(start.getDate() + i);
-        const dateStr = date.toISOString().split('T')[0];
-        dailyMap.set(dateStr, { 
-          day: days[date.getDay()],
+      for (let i = 0; i <= diffDays; i++) {
+        const d = new Date(start.getTime() + (i * 24 * 60 * 60 * 1000) + (5.5 * 60 * 60 * 1000));
+        const dStr = d.toISOString().split('T')[0];
+        dailyMap.set(dStr, { 
+          day: d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }), 
           revenue: 0, 
           expense: 0 
         });
       }
 
-      // Fill with actual data
       transactions.forEach(item => {
-        const dateStr = item._id.date;
-        if (dailyMap.has(dateStr)) {
-          const entry = dailyMap.get(dateStr);
-          if (item._id.type === 'income') {
-            entry.revenue = item.total;
-          } else {
-            entry.expense = item.total;
-          }
+        if (dailyMap.has(item._id.date)) {
+          const entry = dailyMap.get(item._id.date);
+          if (item._id.type === 'income') entry.revenue += item.total;
+          else if (item._id.type === 'expense') entry.expense += item.total;
         }
       });
-
-      // Convert to array
       chartData = Array.from(dailyMap.values());
     }
-    else {
-      // Monthly/Period data - group by week or day
-      const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-      console.log("📅 Days in range:", diffDays);
-      
-      if (diffDays <= 31) {
-        // Daily data for shorter periods
-        const dailyMap = new Map();
-        
-        // Initialize all dates in range
-        for (let i = 0; i <= diffDays; i++) {
-          const date = new Date(start);
-          date.setDate(start.getDate() + i);
-          const dateStr = date.toISOString().split('T')[0];
-          dailyMap.set(dateStr, { 
-            day: date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
-            revenue: 0, 
-            expense: 0 
-          });
-        }
 
-        // Fill with actual data
-        transactions.forEach(item => {
-          const dateStr = item._id.date;
-          if (dailyMap.has(dateStr)) {
-            const entry = dailyMap.get(dateStr);
-            if (item._id.type === 'income') {
-              entry.revenue = item.total;
-            } else {
-              entry.expense = item.total;
-            }
-          }
-        });
-
-        chartData = Array.from(dailyMap.values());
-      } else {
-        // Weekly data for longer periods
-        const weeks = Math.ceil(diffDays / 7);
-        console.log("📅 Using weekly grouping, weeks:", weeks);
-        
-        const weeklyData = [];
-
-        for (let w = 0; w < weeks; w++) {
-          const weekStart = new Date(start);
-          weekStart.setDate(start.getDate() + (w * 7));
-          const weekEnd = new Date(weekStart);
-          weekEnd.setDate(weekStart.getDate() + 6);
-
-          let weekRevenue = 0;
-          let weekExpense = 0;
-
-          transactions.forEach(item => {
-            const itemDate = new Date(item._id.date);
-            if (itemDate >= weekStart && itemDate <= weekEnd) {
-              if (item._id.type === 'income') {
-                weekRevenue += item.total;
-              } else {
-                weekExpense += item.total;
-              }
-            }
-          });
-
-          weeklyData.push({
-            day: `Week ${w + 1}`,
-            revenue: weekRevenue,
-            expense: weekExpense
-          });
-        }
-
-        chartData = weeklyData;
-      }
-    }
-
-    console.log("✅ Chart data prepared with", chartData.length, "entries");
-    if (chartData.length > 0) {
-      console.log("Sample:", chartData[0]);
-    }
-
-    // Calculate totals
-    const totalRevenue = chartData.reduce((sum, item) => sum + (item.revenue || 0), 0);
-    const totalExpense = chartData.reduce((sum, item) => sum + (item.expense || 0), 0);
-
-    console.log("📊 Totals:", { totalRevenue, totalExpense, netProfit: totalRevenue - totalExpense });
+    const totalRevenue = chartData.reduce((sum, item) => sum + item.revenue, 0);
+    const totalExpense = chartData.reduce((sum, item) => sum + item.expense, 0);
 
     res.json({
       success: true,
       data: {
         chartData,
         summary: {
-          totalRevenue,
-          totalExpense,
-          netProfit: totalRevenue - totalExpense,
-          period: period || 'custom',
-          dateRange: { start, end }
+          totalRevenue: Math.round(totalRevenue),
+          totalExpense: Math.round(totalExpense),
+          netProfit: Math.round(totalRevenue - totalExpense),
+          period: period || 'custom'
         }
       }
     });
 
   } catch (error) {
     console.error('❌ Error in getDailyRevenueStats:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch daily revenue stats',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Failed to fetch chart data' });
   }
 };

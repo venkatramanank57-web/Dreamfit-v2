@@ -2112,94 +2112,217 @@ export default function OrderDetails() {
   };
 
   // Handle Save Payment
-  const handleSavePayment = async (paymentData) => {
-    console.log("%c💰💰💰 SAVE PAYMENT CALLED 💰💰💰", "background: purple; color: white; font-size: 14px");
-    console.log("📦 Payment data received:", paymentData);
-    console.log("📦 Order ID:", id);
-    console.log("📦 Customer ID:", currentOrder?.customer?._id);
+  // const handleSavePayment = async (paymentData) => {
+  //   console.log("%c💰💰💰 SAVE PAYMENT CALLED 💰💰💰", "background: purple; color: white; font-size: 14px");
+  //   console.log("📦 Payment data received:", paymentData);
+  //   console.log("📦 Order ID:", id);
+  //   console.log("📦 Customer ID:", currentOrder?.customer?._id);
     
-    // Validate required fields
-    if (!paymentData.amount || paymentData.amount <= 0) {
-      showToast.error("Please enter a valid amount");
-      return;
+  //   // Validate required fields
+  //   if (!paymentData.amount || paymentData.amount <= 0) {
+  //     showToast.error("Please enter a valid amount");
+  //     return;
+  //   }
+
+  //   if (!currentOrder?.customer?._id) {
+  //     showToast.error("Customer information missing");
+  //     return;
+  //   }
+
+  //   setPaymentLoading(true);
+
+  //   try {
+  //     // Prepare payment data with proper field names
+  //     const preparedPaymentData = {
+  //       order: id,
+  //       customer: currentOrder.customer._id,
+  //       amount: Number(paymentData.amount),
+  //       type: paymentData.type || 'advance',
+  //       method: paymentData.method || 'cash',
+  //       referenceNumber: paymentData.referenceNumber?.trim() || '',
+  //       paymentDate: paymentData.paymentDate || new Date().toISOString().split('T')[0],
+  //       paymentTime: paymentData.paymentTime || new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
+  //       notes: paymentData.notes?.trim() || ''
+  //     };
+
+  //     console.log("📤 Prepared payment data:", preparedPaymentData);
+
+  //     let result;
+      
+  //     if (editingPayment) {
+  //       // Update existing payment
+  //       console.log("✏️ Updating payment ID:", editingPayment._id);
+  //       result = await dispatch(updatePayment({
+  //         id: editingPayment._id,
+  //         data: preparedPaymentData
+  //       })).unwrap();
+  //       console.log("✅ Payment updated:", result);
+  //       showToast.success("Payment updated successfully");
+  //     } else {
+  //       // Create new payment
+  //       console.log("➕ Creating new payment...");
+  //       result = await dispatch(createPayment(preparedPaymentData)).unwrap();
+  //       console.log("✅ Payment created:", result);
+  //       showToast.success("Payment added successfully");
+  //     }
+
+  //     // Close modal and reset
+  //     setShowPaymentModal(false);
+  //     setEditingPayment(null);
+
+  //     // 🔥 CRITICAL: Refresh all data to show updated payments
+  //     console.log("🔄 Refreshing order and payments data...");
+      
+  //     // Add a small delay to ensure backend processing
+  //     await new Promise(resolve => setTimeout(resolve, 500));
+      
+  //     // Refresh order data (which includes updated payment summary)
+  //     await dispatch(fetchOrderById(id)).unwrap();
+      
+  //     // Refresh payments list
+  //     await dispatch(fetchOrderPayments(id)).unwrap();
+      
+  //     console.log("✅ Data refreshed successfully");
+
+  //   } catch (error) {
+  //     console.error("❌ Error saving payment:", error);
+      
+  //     // Detailed error logging
+  //     if (error.response?.data) {
+  //       console.error("Server error response:", error.response.data);
+  //       showToast.error(error.response.data.message || "Failed to save payment");
+  //     } else if (error.message) {
+  //       showToast.error(error.message);
+  //     } else {
+  //       showToast.error("Failed to save payment");
+  //     }
+  //   } finally {
+  //     setPaymentLoading(false);
+  //   }
+  // };
+
+  // 🔥 FIXED: Handle Save Payment with correct time handling
+const handleSavePayment = async (paymentData) => {
+  console.log("%c💰💰💰 SAVE PAYMENT CALLED 💰💰💰", "background: purple; color: white; font-size: 14px");
+  console.log("📦 Payment data received:", paymentData);
+  console.log("📦 Order ID:", id);
+  console.log("📦 Customer ID:", currentOrder?.customer?._id);
+  
+  // Validate required fields
+  if (!paymentData.amount || paymentData.amount <= 0) {
+    showToast.error("Please enter a valid amount");
+    return;
+  }
+
+  if (!currentOrder?.customer?._id) {
+    showToast.error("Customer information missing");
+    return;
+  }
+
+  setPaymentLoading(true);
+
+  try {
+    // ✅ CRITICAL FIX: Merge selected date with current time
+    const now = new Date();
+    
+    // Get payment date from form or use today
+    let paymentDateObj;
+    if (paymentData.paymentDate) {
+      paymentDateObj = new Date(paymentData.paymentDate);
+    } else {
+      paymentDateObj = new Date();
+    }
+    
+    // ✅ Merge: Selected date + current time
+    paymentDateObj.setHours(now.getHours());
+    paymentDateObj.setMinutes(now.getMinutes());
+    paymentDateObj.setSeconds(now.getSeconds());
+    paymentDateObj.setMilliseconds(now.getMilliseconds());
+    
+    // Format date as YYYY-MM-DD for display
+    const formattedDate = paymentDateObj.toISOString().split('T')[0];
+    const formattedTime = paymentDateObj.toLocaleTimeString('en-IN', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+    
+    console.log("📅 Payment timestamp:", {
+      originalDate: paymentData.paymentDate,
+      currentTime: now.toLocaleTimeString(),
+      finalDateTime: paymentDateObj.toISOString(),
+      displayDate: formattedDate,
+      displayTime: formattedTime
+    });
+    
+    // Prepare payment data with proper field names
+    const preparedPaymentData = {
+      order: id,
+      customer: currentOrder.customer._id,
+      amount: Number(paymentData.amount),
+      type: paymentData.type || 'advance',
+      method: paymentData.method || 'cash',
+      referenceNumber: paymentData.referenceNumber?.trim() || '',
+      paymentDate: paymentDateObj.toISOString(), // ✅ Send full ISO string with time
+      paymentTime: formattedTime, // HH:MM AM/PM for display
+      notes: paymentData.notes?.trim() || ''
+    };
+
+    console.log("📤 Prepared payment data with full timestamp:", preparedPaymentData);
+
+    let result;
+    
+    if (editingPayment) {
+      // Update existing payment
+      console.log("✏️ Updating payment ID:", editingPayment._id);
+      result = await dispatch(updatePayment({
+        id: editingPayment._id,
+        data: preparedPaymentData
+      })).unwrap();
+      console.log("✅ Payment updated:", result);
+      showToast.success("Payment updated successfully");
+    } else {
+      // Create new payment
+      console.log("➕ Creating new payment with full timestamp...");
+      result = await dispatch(createPayment(preparedPaymentData)).unwrap();
+      console.log("✅ Payment created:", result);
+      showToast.success("Payment added successfully");
     }
 
-    if (!currentOrder?.customer?._id) {
-      showToast.error("Customer information missing");
-      return;
+    // Close modal and reset
+    setShowPaymentModal(false);
+    setEditingPayment(null);
+
+    // 🔥 CRITICAL: Refresh all data to show updated payments
+    console.log("🔄 Refreshing order and payments data...");
+    
+    // Add a small delay to ensure backend processing
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Refresh order data (which includes updated payment summary)
+    await dispatch(fetchOrderById(id)).unwrap();
+    
+    // Refresh payments list
+    await dispatch(fetchOrderPayments(id)).unwrap();
+    
+    console.log("✅ Data refreshed successfully");
+
+  } catch (error) {
+    console.error("❌ Error saving payment:", error);
+    
+    // Detailed error logging
+    if (error.response?.data) {
+      console.error("Server error response:", error.response.data);
+      showToast.error(error.response.data.message || "Failed to save payment");
+    } else if (error.message) {
+      showToast.error(error.message);
+    } else {
+      showToast.error("Failed to save payment");
     }
-
-    setPaymentLoading(true);
-
-    try {
-      // Prepare payment data with proper field names
-      const preparedPaymentData = {
-        order: id,
-        customer: currentOrder.customer._id,
-        amount: Number(paymentData.amount),
-        type: paymentData.type || 'advance',
-        method: paymentData.method || 'cash',
-        referenceNumber: paymentData.referenceNumber?.trim() || '',
-        paymentDate: paymentData.paymentDate || new Date().toISOString().split('T')[0],
-        paymentTime: paymentData.paymentTime || new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
-        notes: paymentData.notes?.trim() || ''
-      };
-
-      console.log("📤 Prepared payment data:", preparedPaymentData);
-
-      let result;
-      
-      if (editingPayment) {
-        // Update existing payment
-        console.log("✏️ Updating payment ID:", editingPayment._id);
-        result = await dispatch(updatePayment({
-          id: editingPayment._id,
-          data: preparedPaymentData
-        })).unwrap();
-        console.log("✅ Payment updated:", result);
-        showToast.success("Payment updated successfully");
-      } else {
-        // Create new payment
-        console.log("➕ Creating new payment...");
-        result = await dispatch(createPayment(preparedPaymentData)).unwrap();
-        console.log("✅ Payment created:", result);
-        showToast.success("Payment added successfully");
-      }
-
-      // Close modal and reset
-      setShowPaymentModal(false);
-      setEditingPayment(null);
-
-      // 🔥 CRITICAL: Refresh all data to show updated payments
-      console.log("🔄 Refreshing order and payments data...");
-      
-      // Add a small delay to ensure backend processing
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Refresh order data (which includes updated payment summary)
-      await dispatch(fetchOrderById(id)).unwrap();
-      
-      // Refresh payments list
-      await dispatch(fetchOrderPayments(id)).unwrap();
-      
-      console.log("✅ Data refreshed successfully");
-
-    } catch (error) {
-      console.error("❌ Error saving payment:", error);
-      
-      // Detailed error logging
-      if (error.response?.data) {
-        console.error("Server error response:", error.response.data);
-        showToast.error(error.response.data.message || "Failed to save payment");
-      } else if (error.message) {
-        showToast.error(error.message);
-      } else {
-        showToast.error("Failed to save payment");
-      }
-    } finally {
-      setPaymentLoading(false);
-    }
-  };
+  } finally {
+    setPaymentLoading(false);
+  }
+};
 
   // Handle Delete Payment
   const handleDeletePayment = async (paymentId) => {

@@ -262,23 +262,59 @@ export default function IncomePage() {
     setShowDetailsModal(true);
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-IN', {
+  // const formatDate = (dateString) => {
+  //   return new Date(dateString).toLocaleDateString('en-IN', {
+  //     day: '2-digit',
+  //     month: 'short',
+  //     year: 'numeric'
+  //   });
+  // };
+
+  // ✅ FIXED: Proper IST date formatting
+const formatDate = (dateString) => {
+  if (!dateString) return '-';
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '-';
+    
+    return date.toLocaleDateString('en-IN', {
+      timeZone: 'Asia/Kolkata',
       day: '2-digit',
       month: 'short',
       year: 'numeric'
     });
-  };
+  } catch (error) {
+    return '-';
+  }
+};
+  // const formatTime = (dateString) => {
+  //   return new Date(dateString).toLocaleTimeString('en-IN', {
+  //     hour: '2-digit',
+  //     minute: '2-digit',
+  //     hour12: true
+  //   });
+  // };
 
-  const formatTime = (dateString) => {
-    return new Date(dateString).toLocaleTimeString('en-IN', {
+  // 🔥 FIXED: Get category label for ALL payment types
+  // ✅ FIXED: Proper IST time formatting
+const formatTime = (dateString) => {
+  if (!dateString) return '-';
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '-';
+    
+    return date.toLocaleTimeString('en-IN', {
+      timeZone: 'Asia/Kolkata',
       hour: '2-digit',
       minute: '2-digit',
       hour12: true
     });
-  };
-
-  // 🔥 FIXED: Get category label for ALL payment types
+  } catch (error) {
+    return '-';
+  }
+};
   const getCategoryLabel = (category, customCategory) => {
     const categories = {
       // Payment-related categories
